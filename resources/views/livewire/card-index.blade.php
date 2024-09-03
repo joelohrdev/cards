@@ -25,7 +25,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 {{ $card->first_name }} {{ $card->last_name }}
-                                <span class="block text-xs text-gray-400">{{ $card->year }} {{ $card->team }}</span>
+                                <span class="block text-xs text-gray-400">{{ $card->team }}</span>
                             </div>
                             @if ($card->rookie)
                                 <x-icons.rookie class="size-8" />
