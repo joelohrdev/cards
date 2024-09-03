@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Card extends Model
 {
@@ -33,7 +34,7 @@ class Card extends Model
         parent::booted();
 
         static::creating(function ($card) {
-            $card->uuid = (string) \Illuminate\Support\Str::uuid();
+            $card->uuid = (string) Str::uuid();
         });
     }
 }
