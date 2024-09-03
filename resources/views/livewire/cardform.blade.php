@@ -4,8 +4,7 @@ use App\Models\Card;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.app')] class extends Component
-{
+new #[Layout('layouts.app')] class extends Component {
     public $year;
     public $number;
     public $mfg;
@@ -121,7 +120,7 @@ new #[Layout('layouts.app')] class extends Component
                         <x-input-label for="set_type" :value="__('Set')" />
                         <x-text-input
                             wire:model="set_type"
-                            placeholder="Stadium Club"
+                            placeholder="Series Two"
                             id="set_type"
                             class="mt-1 block w-full"
                             type="text"

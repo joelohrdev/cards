@@ -6,7 +6,6 @@
                 <th scope="col" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900 sm:pl-0">Name</th>
                 <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Team</th>
                 <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Manufacturer</th>
-                <th scope="col" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900 sm:pr-0">Type</th>
                 <th scope="col" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900 sm:pr-0">
                     Numbered
                 </th>
@@ -34,9 +33,8 @@
                         </div>
                     </td>
                     <td class="whitespace-nowrap p-2 text-xs text-gray-500">{{ $card->team }}</td>
-                    <td class="whitespace-nowrap p-2 text-xs text-gray-500">{{ $card->mfg }}</td>
-                    <td class="whitespace-nowrap py-2 pl-4 pr-4 text-xs text-gray-500 sm:pr-0">
-                        {{ $card->set_type }}
+                    <td class="whitespace-nowrap p-2 text-xs text-gray-500">
+                        {{ $card->year }} {{ $card->mfg }} {{ $card->set_type }}
                     </td>
                     <td class="whitespace-nowrap py-2 pl-4 pr-4 text-xs text-gray-500 sm:pr-0">
                         {{ $card->numbered }}
