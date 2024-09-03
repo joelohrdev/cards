@@ -11,7 +11,7 @@ class Card extends Model
         'uuid',
         'year',
         'mfg',
-        'set',
+        'set_type',
         'first_name',
         'last_name',
         'team',

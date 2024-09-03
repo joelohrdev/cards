@@ -13,7 +13,7 @@ return new class extends Migration
             $table->uuid()->unique();
             $table->integer('year')->nullable();
             $table->string('mfg')->nullable();
-            $table->string('set')->nullable();
+            $table->string('set_type')->nullable();
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
             $table->string('team')->nullable();

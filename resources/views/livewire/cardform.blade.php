@@ -4,40 +4,57 @@ use App\Models\Card;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.app')] class extends Component {
-    public string $year = '';
-    public string $mfg = '';
-    public string $cardSet = '';
-    public string $firstName = '';
-    public string $lastName = '';
-    public string $team = '';
-    public string $numbered = '';
-    public bool $rookie = false;
-    public string $parallel = '';
-    public ?int $value = null;
-    public string $notes = '';
-    public string $imageFront = '';
-    public string $imageBack = '';
+new #[Layout('layouts.app')] class extends Component
+{
+    public $year;
+    public $mfg;
+    public $set_type;
+    public $first_name;
+    public $last_name;
+    public $team;
+    public $numbered;
+    public $rookie;
+    public $parallel;
+    public $value;
+    public $notes;
+    public $imageFront;
+    public $imageBack;
 
     public function create(): void
     {
         $validated = $this->validate([
-            'year' => ['required', 'string', 'max:255'],
-            'mfg' => ['required', 'string', 'max:255'],
-            'cardSet' => ['required', 'string', 'max:255'],
-            'firstName' => ['required', 'string', 'max:255'],
-            'lastName' => ['required', 'string', 'max:255'],
-            'team' => ['required', 'string', 'max:255'],
-            'numbered' => ['required', 'string', 'max:255'],
-            'parallel' => ['required', 'string', 'max:255'],
-            'value' => ['required', 'integer'],
-            'notes' => ['nullable', 'string', 'max:255'],
-            'imageFront' => ['nullable', 'string', 'max:255'],
-            'imageBack' => ['nullable', 'string', 'max:255'],
+            'year' => 'required|numeric',
+            'mfg' => 'required|string',
+            'set_type' => 'required|string',
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'team' => 'required|string',
+            'numbered' => 'nullable|string',
+            'rookie' => 'nullable|boolean',
+            'parallel' => 'nullable|string',
+            'value' => 'nullable|numeric',
+            'notes' => 'nullable|string',
+            'imageFront' => 'nullable|image',
+            'imageBack' => 'nullable|image',
         ]);
 
-        // Create the card
         Card::create($validated);
+
+        $this->reset([
+            'year',
+            'mfg',
+            'set_type',
+            'first_name',
+            'last_name',
+            'team',
+            'numbered',
+            'rookie',
+            'parallel',
+            'value',
+            'notes',
+            'imageFront',
+            'imageBack',
+        ]);
     }
 }; ?>
 
@@ -81,51 +98,51 @@ new #[Layout('layouts.app')] class extends Component {
 
                     <!-- Set -->
                     <div class="mt-4">
-                        <x-input-label for="cardSet" :value="__('Set')" />
+                        <x-input-label for="set_type" :value="__('Set')" />
                         <x-text-input
-                            wire:model="cardSet"
+                            wire:model="set_type"
                             placeholder="Stadium Club"
-                            id="cardSet"
+                            id="set_type"
                             class="mt-1 block w-full"
                             type="text"
-                            name="cardSet"
+                            name="set_type"
                             required
-                            autocomplete="cardSet"
+                            autocomplete="set_type"
                         />
-                        <x-input-error :messages="$errors->get('cardSet')" class="mt-2" />
+                        <x-input-error :messages="$errors->get('set_type')" class="mt-2" />
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <!-- First Name -->
                         <div class="mt-4">
-                            <x-input-label for="firstName" :value="__('First Name')" />
+                            <x-input-label for="first_name" :value="__('First Name')" />
                             <x-text-input
-                                wire:model="firstName"
+                                wire:model="first_name"
                                 placeholder="Frank"
-                                id="firstName"
+                                id="first_name"
                                 class="mt-1 block w-full"
                                 type="text"
-                                name="firstName"
+                                name="first_name"
                                 required
-                                autocomplete="firstName"
+                                autocomplete="first_name"
                             />
-                            <x-input-error :messages="$errors->get('firstName')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
                         </div>
 
                         <!-- Last Name -->
                         <div class="mt-4">
-                            <x-input-label for="lastName" :value="__('Last Name')" />
+                            <x-input-label for="last_name" :value="__('Last Name')" />
                             <x-text-input
-                                wire:model="lastName"
+                                wire:model="last_name"
                                 placeholder="Thomas"
-                                id="lastName"
+                                id="last_name"
                                 class="mt-1 block w-full"
                                 type="text"
-                                name="lastName"
+                                name="last_name"
                                 required
-                                autocomplete="lastName"
+                                autocomplete="last_name"
                             />
-                            <x-input-error :messages="$errors->get('lastName')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
                         </div>
                     </div>
 
@@ -155,7 +172,6 @@ new #[Layout('layouts.app')] class extends Component {
                             class="mt-1 block w-full"
                             type="text"
                             name="numbered"
-                            required
                             autocomplete="numbered"
                         />
                         <x-input-error :messages="$errors->get('numbered')" class="mt-2" />
@@ -171,7 +187,6 @@ new #[Layout('layouts.app')] class extends Component {
                             class="mt-1 block w-full"
                             type="text"
                             name="parallel"
-                            required
                             autocomplete="parallel"
                         />
                         <x-input-error :messages="$errors->get('parallel')" class="mt-2" />
@@ -184,9 +199,8 @@ new #[Layout('layouts.app')] class extends Component {
                             wire:model="value"
                             id="value"
                             class="mt-1 block w-full"
-                            type="text"
+                            type="number"
                             name="value"
-                            required
                             autocomplete="value"
                         />
                         <x-input-error :messages="$errors->get('value')" class="mt-2" />
@@ -201,7 +215,6 @@ new #[Layout('layouts.app')] class extends Component {
                             class="mt-1 block w-full"
                             type="text"
                             name="notes"
-                            required
                             autocomplete="notes"
                         />
                         <x-input-error :messages="$errors->get('notes')" class="mt-2" />
