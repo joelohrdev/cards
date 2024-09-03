@@ -12,6 +12,9 @@
                 <th scope="col" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900 sm:pr-0">
                     Parallel
                 </th>
+                <th scope="col" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900 sm:pr-0">
+                    Value
+                </th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-200 bg-white">
@@ -38,6 +41,11 @@
                     </td>
                     <td class="whitespace-nowrap py-2 pl-4 pr-4 text-xs text-gray-500 sm:pr-0">
                         {{ $card->parallel }}
+                    </td>
+                    <td class="whitespace-nowrap py-2 pl-4 pr-4 text-xs text-gray-500 sm:pr-0">
+                        @if ($card->value)
+                            ${{ $card->value }}
+                        @endif
                     </td>
                 </tr>
             @endforeach

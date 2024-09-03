@@ -4,8 +4,7 @@ use App\Models\Card;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.app')] class extends Component
-{
+new #[Layout('layouts.app')] class extends Component {
     public $year;
     public $mfg;
     public $set_type;
@@ -199,7 +198,7 @@ new #[Layout('layouts.app')] class extends Component
                             wire:model="value"
                             id="value"
                             class="mt-1 block w-full"
-                            type="number"
+                            type="text"
                             name="value"
                             autocomplete="value"
                         />
