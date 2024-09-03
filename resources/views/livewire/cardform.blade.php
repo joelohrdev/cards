@@ -4,7 +4,8 @@ use App\Models\Card;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.app')] class extends Component {
+new #[Layout('layouts.app')] class extends Component
+{
     public $year;
     public $number;
     public $mfg;
@@ -24,7 +25,7 @@ new #[Layout('layouts.app')] class extends Component {
     {
         $validated = $this->validate([
             'year' => 'required|numeric',
-            'number' => 'nullable|numeric',
+            'number' => 'nullable|string',
             'mfg' => 'required|string',
             'set_type' => 'required|string',
             'first_name' => 'required|string',
