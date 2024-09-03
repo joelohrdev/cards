@@ -4,8 +4,7 @@ use App\Models\Card;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.app')] class extends Component
-{
+new #[Layout('layouts.app')] class extends Component {
     public $year;
     public $number;
     public $mfg;
@@ -84,15 +83,15 @@ new #[Layout('layouts.app')] class extends Component
                     </div>
 
                     <!-- Year -->
-                    <div>
+                    <div class="mt-4">
                         <x-input-label for="number" :value="__('Card Number')" />
                         <x-text-input
                             wire:model="number"
                             placeholder="321"
                             id="number"
                             class="mt-1 block w-full"
-                            type="number"
-                            name="text"
+                            type="text"
+                            name="number"
                             required
                             autofocus
                             autocomplete="number"
