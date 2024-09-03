@@ -11,6 +11,7 @@ class Card extends Model
     protected $fillable = [
         'uuid',
         'year',
+        'number',
         'mfg',
         'set_type',
         'first_name',

@@ -6,6 +6,7 @@ use Livewire\Volt\Component;
 
 new #[Layout('layouts.app')] class extends Component {
     public $year;
+    public $number;
     public $mfg;
     public $set_type;
     public $first_name;
@@ -23,6 +24,7 @@ new #[Layout('layouts.app')] class extends Component {
     {
         $validated = $this->validate([
             'year' => 'required|numeric',
+            'number' => 'nullable|numeric',
             'mfg' => 'required|string',
             'set_type' => 'required|string',
             'first_name' => 'required|string',
@@ -41,6 +43,7 @@ new #[Layout('layouts.app')] class extends Component {
 
         $this->reset([
             'year',
+            'number',
             'mfg',
             'set_type',
             'first_name',
@@ -77,6 +80,23 @@ new #[Layout('layouts.app')] class extends Component {
                             autocomplete="year"
                         />
                         <x-input-error :messages="$errors->get('year')" class="mt-2" />
+                    </div>
+
+                    <!-- Year -->
+                    <div>
+                        <x-input-label for="number" :value="__('Card Number')" />
+                        <x-text-input
+                            wire:model="number"
+                            placeholder="321"
+                            id="number"
+                            class="mt-1 block w-full"
+                            type="number"
+                            name="number"
+                            required
+                            autofocus
+                            autocomplete="number"
+                        />
+                        <x-input-error :messages="$errors->get('number')" class="mt-2" />
                     </div>
 
                     <!-- Mfg -->
