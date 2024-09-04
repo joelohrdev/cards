@@ -13,6 +13,10 @@ Volt::route('cards/create', 'cardform')
     ->middleware(['auth'])
     ->name('cards.create');
 
+Route::get('cards/{card:uuid}', \App\Livewire\CardShow::class)
+    ->middleware('auth')
+    ->name('cards.show');
+
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');

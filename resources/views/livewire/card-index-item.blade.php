@@ -7,7 +7,7 @@
                 <span class="block text-xs text-gray-400">{{ $card->team }}</span>
             </div>
             @if ($card->rookie)
-                <x-icons.rookie class="size-8" />
+                <x-icons.rookie class="size-8 opacity-75" />
             @endif
         </div>
     </td>
@@ -27,6 +27,6 @@
         @endif
     </td>
     <td class="whitespace-nowrap py-2 pl-4 pr-4 text-xs text-gray-500 sm:pr-0">
-        <a href="#">View</a>
+        <a wire:navigate href="{{ route('cards.show', $card) }}">View</a>
     </td>
 </tr>
