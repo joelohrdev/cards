@@ -13,6 +13,10 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+Route::get('/cards/create', \App\Livewire\Card\Create::class)
+    ->middleware(['auth', 'verified'])
+    ->name('cards.create');
+
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Brand;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -15,7 +16,7 @@ class Card extends Model
             'name' => 'string',
             'team' => 'string',
             'year' => 'string',
-            'brand' => 'string',
+            'brand' => Brand::class,
             'number' => 'string',
             'set_name' => 'string',
             'image' => 'string',
