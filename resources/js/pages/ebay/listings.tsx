@@ -42,6 +42,7 @@ type Props = {
 const tabs: (EbayListingStatus | null)[] = [
     null,
     'active',
+    'pending_approval',
     'draft',
     'sold',
     'ended',
@@ -189,6 +190,9 @@ export default function EbayListings({
                                             `${listing.status === 'sold' ? 'Sold' : 'Ended'} ${shortDate(listing.ended_at)}`}
                                         {listing.status === 'draft' &&
                                             `Saved ${shortDate(listing.updated_at)}`}
+                                        {listing.status ===
+                                            'pending_approval' &&
+                                            'Waiting on approval'}
                                     </p>
                                     {listing.error && (
                                         <p className="mt-1 line-clamp-2 text-xs text-destructive">

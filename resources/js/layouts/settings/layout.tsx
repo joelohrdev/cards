@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import { PageHeader } from '@/components/kit/page-header';
 import { useCurrentUrl } from '@/hooks/use-current-url';
@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import team from '@/routes/team';
 
 const sections = [
     { title: 'Profile', href: edit() },
@@ -15,6 +16,11 @@ const sections = [
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const { auth } = usePage().props;
+    const visibleSections =
+        auth.user.role === 'admin'
+            ? [...sections, { title: 'Team', href: team.index() }]
+            : sections;
 
     return (
         <>
@@ -28,7 +34,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                     className="flex gap-1 overflow-x-auto lg:w-48 lg:flex-col"
                     aria-label="Settings"
                 >
-                    {sections.map((section) => (
+                    {visibleSections.map((section) => (
                         <Link
                             key={section.title}
                             href={section.href}

@@ -11,6 +11,7 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            approvalsWaiting: number;
             [key: string]: unknown;
         };
     }

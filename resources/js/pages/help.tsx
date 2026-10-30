@@ -379,7 +379,17 @@ const sections: Section[] = [
                     <li>
                         On a card’s page, choose to list it on eBay. Check the
                         title, price and condition, then save it as a draft or
-                        publish it. The card’s photos go with the listing.
+                        send it for approval. The card’s photos go with the
+                        listing.
+                    </li>
+                    <li>
+                        Everyone else on the team gets an email and sees it
+                        under <Go href={ebay.approvals.index()}>Approvals</Go>.
+                        Once they’ve all approved, it goes live on eBay. If
+                        anyone declines, it goes back to a draft with their
+                        note. To change a listing that’s waiting, withdraw the
+                        request first; changing an approved draft needs approval
+                        again.
                     </li>
                 </Steps>
                 <p>
@@ -439,8 +449,10 @@ const sections: Section[] = [
         body: (
             <p>
                 Change your name, email and password from the settings menu. New
-                accounts can’t be created from the sign-in page; ask whoever
-                runs the app to add you.
+                accounts can’t be created from the sign-in page: an admin
+                invites people from Settings → Team, and the emailed link lets
+                them set a password. Admins can also make someone an admin or
+                remove them; the cards they added stay.
             </p>
         ),
     },

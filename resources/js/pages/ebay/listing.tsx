@@ -3,6 +3,8 @@ import { AlertTriangle, ExternalLink, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { CardArt } from '@/components/cards/card-art';
 import { GradeBadge } from '@/components/cards/grade-badge';
+import { ApprovalPanel } from '@/components/ebay/approval-panel';
+import type { ListingApproval } from '@/components/ebay/approval-panel';
 import { ListingStatusBadge } from '@/components/ebay/listing-status';
 import type { EbayListingStatus } from '@/components/ebay/listing-status';
 import { Field, MoneyInput, Textarea } from '@/components/kit/field';
@@ -41,6 +43,7 @@ type Listing = {
 type Props = {
     item: CollectionItem;
     listing: Listing | null;
+    approval: ListingApproval | null;
     defaults: { title: string; description: string; price: string };
     suggestedTitle: string;
     aspects: Record<string, string[]>;
@@ -58,6 +61,7 @@ const TITLE_LIMIT = 80;
 export default function EbayListingPage({
     item,
     listing,
+    approval,
     defaults,
     suggestedTitle,
     aspects,
@@ -80,6 +84,8 @@ export default function EbayListingPage({
     const status = listing?.status ?? null;
     const isLive = status === 'active';
     const isDraft = status === 'draft';
+    const isPending = status === 'pending_approval';
+    const isApproved = isDraft && Boolean(approval?.approved_at);
     const isClosed = status === 'sold' || (status === 'ended' && !canList);
     const editsExisting = isLive || isDraft;
     const canPublish = configured && connected && ready;
@@ -119,11 +125,13 @@ export default function EbayListingPage({
 
     const heading = isLive
         ? 'Edit eBay listing'
-        : isDraft
-          ? 'Finish eBay listing'
-          : status === 'ended'
-            ? 'Relist on eBay'
-            : 'List on eBay';
+        : isPending
+          ? 'Waiting on approval'
+          : isDraft
+            ? 'Finish eBay listing'
+            : status === 'ended'
+              ? 'Relist on eBay'
+              : 'List on eBay';
 
     return (
         <>
@@ -152,7 +160,9 @@ export default function EbayListingPage({
                 description={
                     isLive && listing?.published_at
                         ? `Live since ${shortDate(listing.published_at)}. Changes you save here update the listing on eBay.`
-                        : 'Check the title, description and price, then publish. Item specifics and condition come from the card’s details.'
+                        : isPending
+                          ? 'It goes to eBay as soon as everyone else approves. To change it, withdraw the request first.'
+                          : 'Check the title, description and price, then send it for approval. It goes to eBay once everyone else approves. Item specifics and condition come from the card’s details.'
                 }
                 actions={
                     <>
@@ -255,7 +265,8 @@ export default function EbayListingPage({
                             <p className="mt-1">{listing.error}</p>
                             <p className="mt-1 text-muted-foreground">
                                 Fix the problem above, then choose “Publish to
-                                eBay” again.
+                                eBay” again. It’s already approved, so it goes
+                                straight to eBay unless you change it.
                             </p>
                         </div>
                     )}
@@ -271,6 +282,16 @@ export default function EbayListingPage({
                         warnings.map((warning) => (
                             <Notice key={warning}>{warning}</Notice>
                         ))}
+
+                    {approval && listing && approval.approvals.length > 0 && (
+                        <Panel title="Approval">
+                            <ApprovalPanel
+                                listingId={listing.id}
+                                approval={approval}
+                                pending={isPending}
+                            />
+                        </Panel>
+                    )}
 
                     {isClosed ? (
                         <Panel title="This listing is closed">
@@ -291,6 +312,7 @@ export default function EbayListingPage({
                         <Panel title="Listing">
                             <form
                                 className="space-y-4"
+                                inert={isPending}
                                 onSubmit={(event) => {
                                     event.preventDefault();
                                     submit(!isLive && canPublish);
@@ -390,7 +412,7 @@ export default function EbayListingPage({
                                 </Field>
 
                                 <div className="flex flex-wrap gap-2 pt-2">
-                                    {isLive ? (
+                                    {isPending ? null : isLive ? (
                                         <Button
                                             type="submit"
                                             disabled={processing}
@@ -405,7 +427,9 @@ export default function EbayListingPage({
                                                     processing || !canPublish
                                                 }
                                             >
-                                                Publish to eBay
+                                                {isApproved
+                                                    ? 'Publish to eBay'
+                                                    : 'Send for approval'}
                                             </Button>
                                             <Button
                                                 type="button"

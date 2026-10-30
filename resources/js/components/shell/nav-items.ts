@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
     Award,
     BookOpenCheck,
+    ClipboardCheck,
     Boxes,
     FileDown,
     FileUp,
@@ -22,6 +23,7 @@ import collection from '@/routes/collection';
 import exportsRoutes from '@/routes/exports';
 import imports from '@/routes/imports';
 import grading from '@/routes/grading';
+import ebayApprovals from '@/routes/ebay/approvals';
 import ebayListings from '@/routes/ebay/listings';
 import locations from '@/routes/locations';
 import sales from '@/routes/sales';
@@ -34,6 +36,8 @@ export type ShellNavItem = {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
     icon: LucideIcon;
+    /** Shows the number of listings waiting on the signed-in user's approval. */
+    countsApprovals?: boolean;
 };
 
 export type ShellNavGroup = {
@@ -86,6 +90,12 @@ export const navGroups: ShellNavGroup[] = [
             { title: 'Grading', href: grading.index(), icon: Award },
             { title: 'Sales', href: sales.index(), icon: HandCoins },
             { title: 'eBay', href: ebayListings.index(), icon: ShoppingBag },
+            {
+                title: 'Approvals',
+                href: ebayApprovals.index(),
+                icon: ClipboardCheck,
+                countsApprovals: true,
+            },
         ],
     },
     {

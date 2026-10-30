@@ -2,6 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\ApprovalDecision;
+use App\Enums\ListingStatus;
+use App\Models\ListingApproval;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -41,6 +44,11 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'approvalsWaiting' => fn (): int => $request->user() === null ? 0 : ListingApproval::query()
+                ->where('user_id', $request->user()->id)
+                ->where('decision', ApprovalDecision::Pending->value)
+                ->whereHas('listing', fn ($listings) => $listings->where('status', ListingStatus::PendingApproval->value))
+                ->count(),
         ];
     }
 }

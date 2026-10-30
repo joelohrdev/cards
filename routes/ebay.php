@@ -4,6 +4,7 @@ use App\Http\Controllers\Ebay\AccountDeletionController;
 use App\Http\Controllers\Ebay\EbayConnectionController;
 use App\Http\Controllers\Ebay\EbayListingController;
 use App\Http\Controllers\Ebay\EbaySettingsController;
+use App\Http\Controllers\Ebay\ListingApprovalController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -20,6 +21,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('ebay/listings/{listing}', [EbayListingController::class, 'destroy'])->name('ebay.listings.destroy');
     Route::post('ebay/listings/{listing}/publish', [EbayListingController::class, 'publish'])->name('ebay.listings.publish');
     Route::post('ebay/listings/{listing}/end', [EbayListingController::class, 'end'])->name('ebay.listings.end');
+
+    Route::get('ebay/approvals', [ListingApprovalController::class, 'index'])->name('ebay.approvals.index');
+    Route::post('ebay/listings/{listing}/approval', [ListingApprovalController::class, 'store'])->name('ebay.listings.approval.store');
+    Route::delete('ebay/listings/{listing}/approval', [ListingApprovalController::class, 'destroy'])->name('ebay.listings.approval.destroy');
+    Route::post('ebay/listings/{listing}/approval/decision', [ListingApprovalController::class, 'decide'])->name('ebay.listings.approval.decide');
 
     Route::get('ebay/items/{item}/listing', [EbayListingController::class, 'edit'])->name('ebay.items.listing');
     Route::post('ebay/items/{item}/listing', [EbayListingController::class, 'store'])->name('ebay.items.listing.store');

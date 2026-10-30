@@ -1,15 +1,12 @@
 import { cn } from '@/lib/utils';
 
 export type EbayListingStatus =
-    | 'draft'
-    | 'active'
-    | 'sold'
-    | 'ended'
-    | 'failed';
+    'draft' | 'pending_approval' | 'active' | 'sold' | 'ended' | 'failed';
 
 export const listingStatusLabels: Record<EbayListingStatus, string> = {
     active: 'Live',
     draft: 'Draft',
+    pending_approval: 'Awaiting approval',
     sold: 'Sold',
     ended: 'Ended',
     failed: 'Failed',
@@ -18,6 +15,7 @@ export const listingStatusLabels: Record<EbayListingStatus, string> = {
 const tones: Record<EbayListingStatus, string> = {
     active: 'bg-primary text-primary-foreground',
     draft: 'bg-muted text-muted-foreground',
+    pending_approval: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
     sold: 'bg-gain/15 text-gain',
     ended: 'border text-muted-foreground',
     failed: 'bg-destructive/10 text-destructive',

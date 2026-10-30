@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Actions\Selling\PublishApprovedListings;
+use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -17,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property string $email
+ * @property UserRole $role
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -43,7 +46,27 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Their pending sign-offs disappear with them, which may leave a listing fully approved.
+        static::deleted(fn () => app(PublishApprovedListings::class)->handle());
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::Admin;
+    }
+
+    /**
+     * @return HasMany<ListingApproval, $this>
+     */
+    public function listingApprovals(): HasMany
+    {
+        return $this->hasMany(ListingApproval::class);
     }
 
     /**

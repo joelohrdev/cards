@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Ebay;
 
+use App\Actions\Selling\RequestListingApproval;
 use App\Enums\ItemStatus;
 use App\Enums\ListingStatus;
 use App\Http\Controllers\Controller;
@@ -24,7 +25,7 @@ use Inertia\Response;
 class EbayListingController extends Controller
 {
     /**
-     * List the user's eBay listings, filtered by status.
+     * List the eBay listings, filtered by status.
      */
     public function index(Request $request): Response
     {
@@ -67,14 +68,15 @@ class EbayListingController extends Controller
     public function edit(Request $request, CollectionItem $item): Response
     {
         $item->load([...CollectionItemResource::LIST_RELATIONS, 'images']);
-        $listing = $this->currentListing($item);
+        $listing = $this->currentListing($item)?->load(['requester', 'approvals.user']);
         $content = ListingContent::for($item);
         $account = $request->user()->ebayAccount;
-        $usesListingValues = $listing !== null && in_array($listing->status, [ListingStatus::Draft, ListingStatus::Active], true);
+        $usesListingValues = $listing !== null && in_array($listing->status, [ListingStatus::Draft, ListingStatus::PendingApproval, ListingStatus::Active], true);
 
         return Inertia::render('ebay/listing', [
             'item' => CollectionItemResource::make($item)->resolve(),
             'listing' => $listing ? $this->listingData($listing) : null,
+            'approval' => $listing ? ListingApprovalController::approvalData($listing, $request->user()->id, $request->user()->isAdmin()) : null,
             'defaults' => [
                 'title' => $usesListingValues ? $listing->title : $content->title(),
                 'description' => $usesListingValues ? $listing->description : $content->description(),
@@ -93,9 +95,9 @@ class EbayListingController extends Controller
     }
 
     /**
-     * Save a draft listing for a card (or relist an ended one), publishing it when asked.
+     * Save a draft listing for a card (or relist an ended one), sending it for approval when asked.
      */
-    public function store(EbayListingRequest $request, CollectionItem $item, ListingPublisher $publisher): RedirectResponse
+    public function store(EbayListingRequest $request, CollectionItem $item, ListingPublisher $publisher, RequestListingApproval $requestApproval): RedirectResponse
     {
         if (! in_array($item->status, ItemStatus::inHand(), true)) {
             throw ValidationException::withMessages(['title' => "This card is marked {$item->status->label()}, so it can’t be listed."]);
@@ -105,6 +107,10 @@ class EbayListingController extends Controller
 
         if ($listing?->status === ListingStatus::Active || $listing?->status === ListingStatus::Sold) {
             throw ValidationException::withMessages(['title' => 'This card already has an eBay listing. Edit that listing instead.']);
+        }
+
+        if ($listing?->status === ListingStatus::PendingApproval) {
+            throw ValidationException::withMessages(['title' => 'This listing is waiting on approval. Withdraw the request to make changes.']);
         }
 
         $listing ??= $request->user()->ebayListings()->make([
@@ -117,16 +123,26 @@ class EbayListingController extends Controller
             'status' => ListingStatus::Draft,
             'listing_id' => null,
             'error' => null,
+        ])->forceFill([
+            'approved_at' => null,
+            'approval_requested_by' => null,
+            'approval_requested_at' => null,
         ])->save();
 
-        return $this->afterSave($request, $listing, $publisher);
+        $listing->approvals()->delete();
+
+        return $this->afterSave($request, $listing, $publisher, $requestApproval);
     }
 
     /**
      * Edit a draft, or revise the title, description and price of a live listing.
      */
-    public function update(EbayListingRequest $request, EbayListing $listing, ListingPublisher $publisher): RedirectResponse
+    public function update(EbayListingRequest $request, EbayListing $listing, ListingPublisher $publisher, RequestListingApproval $requestApproval): RedirectResponse
     {
+        if ($listing->status === ListingStatus::PendingApproval) {
+            throw ValidationException::withMessages(['title' => 'This listing is waiting on approval. Withdraw the request to make changes.']);
+        }
+
         $listing->fill($this->listingAttributes($request));
 
         if ($listing->status === ListingStatus::Active) {
@@ -145,18 +161,26 @@ class EbayListingController extends Controller
             throw ValidationException::withMessages(['title' => 'Only drafts and live listings can be edited.']);
         }
 
+        if ($listing->isDirty(['title', 'description', 'price'])) {
+            $listing->approved_at = null;
+        }
+
         $listing->save();
 
-        return $this->afterSave($request, $listing, $publisher);
+        return $this->afterSave($request, $listing, $publisher, $requestApproval);
     }
 
     /**
-     * Publish a saved draft.
+     * Publish a draft everyone has approved, such as one eBay turned away the first time.
      */
     public function publish(EbayListing $listing, ListingPublisher $publisher): RedirectResponse
     {
         if ($listing->status !== ListingStatus::Draft) {
             throw ValidationException::withMessages(['ebay' => 'Only drafts can be published.']);
+        }
+
+        if ($listing->approved_at === null) {
+            throw ValidationException::withMessages(['ebay' => 'Everyone has to approve this listing before it goes to eBay.']);
         }
 
         $this->flashPublishResult($publisher->publish($listing));
@@ -200,10 +224,20 @@ class EbayListingController extends Controller
         return to_route('ebay.listings.index');
     }
 
-    private function afterSave(EbayListingRequest $request, EbayListing $listing, ListingPublisher $publisher): RedirectResponse
+    private function afterSave(EbayListingRequest $request, EbayListing $listing, ListingPublisher $publisher, RequestListingApproval $requestApproval): RedirectResponse
     {
-        if ($request->boolean('publish')) {
+        if ($request->boolean('publish') && $listing->approved_at !== null) {
             $this->flashPublishResult($publisher->publish($listing));
+        } elseif ($request->boolean('publish')) {
+            $requestApproval->handle($request->user(), $listing);
+
+            $listing->refresh();
+
+            if ($listing->status === ListingStatus::PendingApproval) {
+                Inertia::flash('toast', ['type' => 'success', 'message' => 'Sent for approval. It goes to eBay once everyone approves.']);
+            } else {
+                $this->flashPublishResult($listing->status === ListingStatus::Active);
+            }
         } else {
             Inertia::flash('toast', ['type' => 'success', 'message' => 'Draft saved.']);
         }

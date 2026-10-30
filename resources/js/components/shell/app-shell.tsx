@@ -6,12 +6,13 @@ import {
     Plus,
     Search,
     Settings,
+    Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CommandSearch } from '@/components/shell/command-search';
 import { LogoMark } from '@/components/shell/logo-mark';
 import { navGroups } from '@/components/shell/nav-items';
-import type { ShellNavGroup } from '@/components/shell/nav-items';
+import type { ShellNavGroup, ShellNavItem } from '@/components/shell/nav-items';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -27,6 +28,7 @@ import { cn, toUrl } from '@/lib/utils';
 import { dashboard, logout } from '@/routes';
 import collection from '@/routes/collection';
 import { edit as editProfile } from '@/routes/profile';
+import team from '@/routes/team';
 
 /**
  * The href of the most specific nav item matching the current page.
@@ -44,6 +46,38 @@ function useActiveHref(): string | undefined {
 const isGroupActive = (group: ShellNavGroup, activeHref?: string): boolean =>
     group.items.some((item) => toUrl(item.href) === activeHref);
 
+/**
+ * How many listings are waiting on the signed-in user, for items that show it.
+ */
+function useItemCount(item: ShellNavItem): number {
+    const { approvalsWaiting } = usePage().props;
+
+    return item.countsApprovals ? approvalsWaiting : 0;
+}
+
+function CountBadge({
+    count,
+    className,
+}: {
+    count: number;
+    className?: string;
+}) {
+    if (count === 0) {
+        return null;
+    }
+
+    return (
+        <span
+            className={cn(
+                'ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-xs leading-5 font-semibold text-white tabular',
+                className,
+            )}
+        >
+            {count}
+        </span>
+    );
+}
+
 const headerLinkClass =
     'relative flex h-9 items-center gap-1 rounded-md px-3 text-sm font-medium text-rail-foreground/80 transition-colors hover:bg-rail-active hover:text-rail-foreground data-[state=open]:bg-rail-active data-[state=open]:text-rail-foreground';
 
@@ -52,6 +86,7 @@ const headerActiveClass =
 
 function HeaderNav() {
     const activeHref = useActiveHref();
+    const { approvalsWaiting } = usePage().props;
 
     return (
         <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Main">
@@ -86,6 +121,13 @@ function HeaderNav() {
                             )}
                         >
                             {group.title}
+                            {group.items.some((item) => item.countsApprovals) &&
+                                approvalsWaiting > 0 && (
+                                    <span
+                                        className="size-2 rounded-full bg-amber-500"
+                                        aria-label={`${approvalsWaiting} waiting on you`}
+                                    />
+                                )}
                             <ChevronDown className="size-3.5 opacity-60" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-56">
@@ -101,6 +143,7 @@ function HeaderNav() {
                                     <Link href={item.href} prefetch>
                                         <item.icon />
                                         {item.title}
+                                        <ItemCount item={item} />
                                     </Link>
                                 </DropdownMenuItem>
                             ))}
@@ -139,6 +182,14 @@ function UserMenu() {
                         Settings
                     </Link>
                 </DropdownMenuItem>
+                {auth.user.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                        <Link href={team.index()}>
+                            <Users />
+                            Team
+                        </Link>
+                    </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                     <Link
                         href={logout()}
@@ -154,6 +205,10 @@ function UserMenu() {
             </DropdownMenuContent>
         </DropdownMenu>
     );
+}
+
+function ItemCount({ item }: { item: ShellNavItem }) {
+    return <CountBadge count={useItemCount(item)} />;
 }
 
 function MobileNav({ onNavigate }: { onNavigate: () => void }) {
@@ -184,6 +239,7 @@ function MobileNav({ onNavigate }: { onNavigate: () => void }) {
                                 >
                                     <item.icon className="size-[18px] opacity-80" />
                                     {item.title}
+                                    <ItemCount item={item} />
                                 </Link>
                             </li>
                         ))}
