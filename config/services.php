@@ -35,4 +35,26 @@ return [
         ],
     ],
 
+    'ebay' => [
+        'environment' => env('EBAY_ENVIRONMENT', 'sandbox'),
+        'client_id' => env('EBAY_CLIENT_ID'),
+        'client_secret' => env('EBAY_CLIENT_SECRET'),
+        'ru_name' => env('EBAY_RU_NAME'),
+        'marketplace_id' => env('EBAY_MARKETPLACE_ID', 'EBAY_US'),
+        'deletion_verification_token' => env('EBAY_DELETION_VERIFICATION_TOKEN'),
+        'api_url' => env('EBAY_ENVIRONMENT', 'sandbox') === 'production' ? 'https://api.ebay.com' : 'https://api.sandbox.ebay.com',
+        'auth_url' => env('EBAY_ENVIRONMENT', 'sandbox') === 'production' ? 'https://auth.ebay.com' : 'https://auth.sandbox.ebay.com',
+        'web_url' => env('EBAY_ENVIRONMENT', 'sandbox') === 'production' ? 'https://www.ebay.com' : 'https://sandbox.ebay.com',
+    ],
+
+    'psa' => [
+        'token' => env('PSA_API_TOKEN'),
+        'url' => env('PSA_API_URL', 'https://api.psacard.com/publicapi'),
+    ],
+
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-sonnet-5-5'),
+    ],
+
 ];

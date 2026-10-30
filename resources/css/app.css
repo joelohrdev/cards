@@ -9,9 +9,10 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Barlow', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display:
+        'Barlow Condensed', 'Barlow', ui-sans-serif, system-ui, sans-serif;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -59,77 +60,109 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    /* Hobby-specific colors: the graded-slab label red, foil gold for numbered/auto cards, and the binder-spine rail. */
+    --color-slab: var(--slab);
+    --color-slab-foreground: var(--slab-foreground);
+    --color-foil: var(--foil);
+    --color-foil-foreground: var(--foil-foreground);
+    --color-gain: var(--gain);
+    --color-loss: var(--loss);
+    --color-rail: var(--rail);
+    --color-rail-foreground: var(--rail-foreground);
+    --color-rail-muted: var(--rail-muted);
+    --color-rail-active: var(--rail-active);
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    --background: #edf0f3;
+    --foreground: #15213a;
+    --card: #ffffff;
+    --card-foreground: #15213a;
+    --popover: #ffffff;
+    --popover-foreground: #15213a;
+    --primary: #17604a;
+    --primary-foreground: #ffffff;
+    --secondary: #e3e8ee;
+    --secondary-foreground: #15213a;
+    --muted: #e8ecf1;
+    --muted-foreground: #5b6678;
+    --accent: #e3e8ee;
+    --accent-foreground: #15213a;
+    --destructive: #b42318;
+    --destructive-foreground: #b42318;
+    --border: #d6dce4;
+    --input: #c9d1dc;
+    --ring: #17604a;
+    --chart-1: #17604a;
+    --chart-2: #2f6fb3;
+    --chart-3: #c9972e;
+    --chart-4: #c8312b;
+    --chart-5: #7a5cb8;
+    --radius: 0.5rem;
+    --sidebar: #15213a;
+    --sidebar-foreground: #e6ebf2;
+    --sidebar-primary: #3fa27f;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #22314f;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #26324a;
+    --sidebar-ring: #3fa27f;
+    --slab: #c8312b;
+    --slab-foreground: #ffffff;
+    --foil: #b8862a;
+    --foil-foreground: #2a1d05;
+    --gain: #17804f;
+    --loss: #b42318;
+    --rail: #15213a;
+    --rail-foreground: #e6ebf2;
+    --rail-muted: #93a0b4;
+    --rail-active: #22314f;
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    --background: #0d1422;
+    --foreground: #e6ebf2;
+    --card: #141d2f;
+    --card-foreground: #e6ebf2;
+    --popover: #172238;
+    --popover-foreground: #e6ebf2;
+    --primary: #3fa27f;
+    --primary-foreground: #04140e;
+    --secondary: #1c2740;
+    --secondary-foreground: #e6ebf2;
+    --muted: #1a2438;
+    --muted-foreground: #93a0b4;
+    --accent: #1c2740;
+    --accent-foreground: #e6ebf2;
+    --destructive: #e5534b;
+    --destructive-foreground: #f47067;
+    --border: #26324a;
+    --input: #2f3c57;
+    --ring: #3fa27f;
+    --chart-1: #3fa27f;
+    --chart-2: #5b9be0;
+    --chart-3: #d9ad4f;
+    --chart-4: #e5534b;
+    --chart-5: #a58ee0;
+    --sidebar: #0a101b;
+    --sidebar-foreground: #e6ebf2;
+    --sidebar-primary: #3fa27f;
+    --sidebar-primary-foreground: #04140e;
+    --sidebar-accent: #172238;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #1c2740;
+    --sidebar-ring: #3fa27f;
+    --slab: #d8423b;
+    --slab-foreground: #ffffff;
+    --foil: #d9ad4f;
+    --foil-foreground: #2a1d05;
+    --gain: #4cc38a;
+    --loss: #f47067;
+    --rail: #0a101b;
+    --rail-foreground: #e6ebf2;
+    --rail-muted: #8391a7;
+    --rail-active: #172238;
 }
 
 @layer base {
@@ -138,6 +171,73 @@
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground antialiased;
+        font-feature-settings: 'lnum' 1;
+    }
+
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-ring;
+    }
+}
+
+@utility font-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+}
+
+@utility tabular {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Replaces the native select arrow so it sits inset from the right edge in every browser. */
+@utility select-chevron {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238391a7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+}
+
+/* The refractor edge: a slow foil sheen reserved for parallels, the one decorative flourish in the app. */
+@utility refractor {
+    background: conic-gradient(
+        from var(--refractor-angle, 0deg),
+        #9be7ff,
+        #c9a7ff,
+        #ffd59b,
+        #a8ffcf,
+        #9be7ff
+    );
+}
+
+@property --refractor-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@keyframes refractor-spin {
+    to {
+        --refractor-angle: 360deg;
+    }
+}
+
+.refractor-edge:hover {
+    animation: refractor-spin 3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .refractor-edge:hover {
+        animation: none;
+    }
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: white;
     }
 }

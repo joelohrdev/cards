@@ -1,0 +1,17 @@
+{
+    "name": "Cards",
+    "short_name": "Cards",
+    "description": "Catalog, search and sell your sports card collection.",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#edf0f3",
+    "theme_color": "#15213a",
+    "icons": [
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        },
+        { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+    ]
+}

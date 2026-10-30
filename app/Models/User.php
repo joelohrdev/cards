@@ -7,6 +7,8 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -42,5 +44,93 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * @return HasMany<CollectionItem, $this>
+     */
+    public function collectionItems(): HasMany
+    {
+        return $this->hasMany(CollectionItem::class);
+    }
+
+    /**
+     * @return HasMany<Tag, $this>
+     */
+    public function tags(): HasMany
+    {
+        return $this->hasMany(Tag::class);
+    }
+
+    /**
+     * @return HasMany<StorageLocation, $this>
+     */
+    public function storageLocations(): HasMany
+    {
+        return $this->hasMany(StorageLocation::class);
+    }
+
+    /**
+     * @return HasMany<PriceComp, $this>
+     */
+    public function priceComps(): HasMany
+    {
+        return $this->hasMany(PriceComp::class);
+    }
+
+    /**
+     * @return HasMany<WantListEntry, $this>
+     */
+    public function wantListEntries(): HasMany
+    {
+        return $this->hasMany(WantListEntry::class);
+    }
+
+    /**
+     * @return HasMany<GradingSubmission, $this>
+     */
+    public function gradingSubmissions(): HasMany
+    {
+        return $this->hasMany(GradingSubmission::class);
+    }
+
+    /**
+     * @return HasMany<Sale, $this>
+     */
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
+    }
+
+    /**
+     * @return HasMany<EbayListing, $this>
+     */
+    public function ebayListings(): HasMany
+    {
+        return $this->hasMany(EbayListing::class);
+    }
+
+    /**
+     * @return HasMany<Import, $this>
+     */
+    public function imports(): HasMany
+    {
+        return $this->hasMany(Import::class);
+    }
+
+    /**
+     * @return HasMany<ShareLink, $this>
+     */
+    public function shareLinks(): HasMany
+    {
+        return $this->hasMany(ShareLink::class);
+    }
+
+    /**
+     * @return HasOne<EbayAccount, $this>
+     */
+    public function ebayAccount(): HasOne
+    {
+        return $this->hasOne(EbayAccount::class);
     }
 }
