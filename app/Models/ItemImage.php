@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ImageSide;
 use Database\Factories\ItemImageFactory;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -29,7 +30,13 @@ class ItemImage extends Model
     /** @use HasFactory<ItemImageFactory> */
     use HasFactory;
 
-    public const string DISK = 'public';
+    /**
+     * The disk card photos live on: this server's public disk, or Cloudflare R2.
+     */
+    public static function disk(): Filesystem
+    {
+        return Storage::disk(config('filesystems.card_photos'));
+    }
 
     /**
      * @return array<string, string>
@@ -55,7 +62,7 @@ class ItemImage extends Model
      */
     protected function url(): Attribute
     {
-        return Attribute::get(fn (): string => Storage::disk(self::DISK)->url($this->path));
+        return Attribute::get(fn (): string => self::disk()->url($this->path));
     }
 
     /**
@@ -65,7 +72,7 @@ class ItemImage extends Model
      */
     protected function thumbUrl(): Attribute
     {
-        return Attribute::get(fn (): string => Storage::disk(self::DISK)->url($this->thumb_path ?? $this->path));
+        return Attribute::get(fn (): string => self::disk()->url($this->thumb_path ?? $this->path));
     }
 
     /**

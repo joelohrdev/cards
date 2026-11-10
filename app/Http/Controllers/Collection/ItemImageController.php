@@ -9,7 +9,6 @@ use App\Models\CollectionItem;
 use App\Models\ItemImage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -64,7 +63,7 @@ class ItemImageController extends Controller
     {
         abort_unless($image->collection_item_id === $item->id, 404);
 
-        Storage::disk(ItemImage::DISK)->delete($image->files());
+        ItemImage::disk()->delete($image->files());
         $image->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Photo deleted.']);

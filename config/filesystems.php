@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Card Photo Disk
+    |--------------------------------------------------------------------------
+    |
+    | Where card photos and their thumbnails are stored. "public" keeps them
+    | on this server; "r2" puts them in a Cloudflare R2 bucket so they live
+    | apart from the server and survive moving or rebuilding it.
+    |
+    */
+
+    'card_photos' => env('CARD_PHOTOS_DISK', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |
@@ -57,6 +70,27 @@ return [
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
+            'report' => false,
+        ],
+
+        /*
+         * Cloudflare R2 (S3-compatible). R2 has no per-object ACLs, so files
+         * are public through the bucket's custom domain (R2_URL) rather than
+         * a "public" visibility. Checksums are only sent when required,
+         * which keeps newer AWS SDK releases compatible with R2.
+         */
+        'r2' => [
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID'),
+            'secret' => env('R2_SECRET_ACCESS_KEY'),
+            'region' => 'auto',
+            'bucket' => env('R2_BUCKET'),
+            'url' => env('R2_URL'),
+            'endpoint' => env('R2_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'request_checksum_calculation' => 'when_required',
+            'response_checksum_validation' => 'when_required',
+            'throw' => true,
             'report' => false,
         ],
 

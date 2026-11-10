@@ -237,6 +237,24 @@ test('uploaded photos are stored as WebP, capped in size, with a grid thumbnail'
         ->and($thumb)->toMatchArray([0 => 480, 1 => 360, 'mime' => 'image/webp']);
 });
 
+test('photos go to the disk chosen for card photos, such as Cloudflare R2', function () {
+    config(['filesystems.card_photos' => 'r2']);
+    Storage::fake('r2');
+    Storage::fake('public');
+    $user = User::factory()->create();
+    $item = CollectionItem::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->post(route('collection.images.store', $item), ['images' => [UploadedFile::fake()->image('front.jpg')]])
+        ->assertSessionHasNoErrors();
+
+    $image = $item->images()->sole();
+
+    Storage::disk('r2')->assertExists([$image->path, $image->thumb_path]);
+    Storage::disk('public')->assertMissing($image->path);
+    expect($image->url)->toBe(Storage::disk('r2')->url($image->path));
+});
+
 test('small photos are converted to WebP without being enlarged', function () {
     Storage::fake('public');
     $user = User::factory()->create();

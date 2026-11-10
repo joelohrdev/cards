@@ -20,7 +20,6 @@ use App\Support\CollectionItemSearch;
 use App\Support\FormOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -238,7 +237,7 @@ class CollectionItemController extends Controller
     {
         $paths = $item->images()->get()->flatMap->files()->all();
         $item->delete();
-        Storage::disk(ItemImage::DISK)->delete($paths);
+        ItemImage::disk()->delete($paths);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Card deleted.']);
 

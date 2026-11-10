@@ -188,7 +188,7 @@ class ImportController extends Controller
             ->each(function (CollectionItem $item) use (&$deleted): void {
                 $paths = $item->images->flatMap->files()->all();
                 $item->delete();
-                Storage::disk(ItemImage::DISK)->delete($paths);
+                ItemImage::disk()->delete($paths);
                 $deleted++;
             });
 

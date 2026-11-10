@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -99,6 +98,6 @@ class BulkCollectionItemController extends Controller
     {
         $paths = ItemImage::query()->whereIn('collection_item_id', (clone $items)->select('id'))->get()->flatMap->files()->all();
         $items->delete();
-        Storage::disk(ItemImage::DISK)->delete($paths);
+        ItemImage::disk()->delete($paths);
     }
 }

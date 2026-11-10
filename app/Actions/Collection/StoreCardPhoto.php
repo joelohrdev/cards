@@ -7,7 +7,6 @@ use App\Models\CollectionItem;
 use App\Models\ItemImage;
 use GdImage;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -29,24 +28,33 @@ class StoreCardPhoto
 
     private const int THUMB_QUALITY = 75;
 
+    /**
+     * Every photo gets a new random name and never changes, so browsers and
+     * Cloudflare can cache it for a year.
+     */
+    private const array UPLOAD_OPTIONS = [
+        'ContentType' => 'image/webp',
+        'CacheControl' => 'public, max-age=31536000, immutable',
+    ];
+
     public function handle(CollectionItem $item, UploadedFile $file, ImageSide $side, int $position): ItemImage
     {
         $directory = 'cards/'.$item->user_id;
+        $disk = ItemImage::disk();
         $source = $this->decode($file);
 
         if ($source === null) {
             return $item->images()->create([
-                'path' => $file->store($directory, ItemImage::DISK),
+                'path' => $disk->putFile($directory, $file, ['CacheControl' => self::UPLOAD_OPTIONS['CacheControl']]),
                 'side' => $side,
                 'position' => $position,
             ]);
         }
 
         $name = $directory.'/'.Str::random(40);
-        $disk = Storage::disk(ItemImage::DISK);
 
-        $disk->put($name.'.webp', $this->encode($source, self::MAX_EDGE, self::PHOTO_QUALITY));
-        $disk->put($name.'-thumb.webp', $this->encode($source, self::THUMB_EDGE, self::THUMB_QUALITY));
+        $disk->put($name.'.webp', $this->encode($source, self::MAX_EDGE, self::PHOTO_QUALITY), self::UPLOAD_OPTIONS);
+        $disk->put($name.'-thumb.webp', $this->encode($source, self::THUMB_EDGE, self::THUMB_QUALITY), self::UPLOAD_OPTIONS);
 
         return $item->images()->create([
             'path' => $name.'.webp',
