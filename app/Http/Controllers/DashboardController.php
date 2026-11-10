@@ -11,7 +11,12 @@ use App\Models\CardSet;
 use App\Models\CollectionItem;
 use App\Models\EbayListing;
 use App\Models\GradingSubmission;
+use App\Models\Import;
+use App\Models\Invitation;
 use App\Models\Sale;
+use App\Models\StorageLocation;
+use App\Models\Tag;
+use App\Models\User;
 use App\Models\ValueSnapshot;
 use App\Models\WantListEntry;
 use Illuminate\Database\Eloquent\Builder;
@@ -135,11 +140,40 @@ class DashboardController extends Controller
                 ->get()
                 ->map($resource),
             'setProgress' => $setProgress,
+            'setup' => CollectionItem::query()->exists() ? null : $this->setupSteps($request->user()),
             'activity' => [
                 'grading' => GradingSubmission::query()->where('status', '!=', GradingStatus::Completed)->count(),
                 'listings' => EbayListing::query()->where('status', ListingStatus::Active)->count(),
                 'wants' => WantListEntry::query()->count(),
             ],
         ]);
+    }
+
+    /**
+     * What to set up before the first card goes in, and which steps are already done.
+     * Inviting the team only applies to admins, since only they can send invitations.
+     *
+     * @return list<array{key: string, done: bool}>
+     */
+    private function setupSteps(User $user): array
+    {
+        $steps = [
+            'team' => User::query()->count() > 1 || Invitation::query()->open()->exists(),
+            'storage' => StorageLocation::query()->exists(),
+            'tags' => Tag::query()->exists(),
+            'sets' => CardSet::query()->exists(),
+            'import' => Import::query()->exists(),
+            'ebay' => $user->ebayAccount()->exists(),
+        ];
+
+        if (! $user->isAdmin()) {
+            unset($steps['team']);
+        }
+
+        return array_map(
+            fn (string $key, bool $done): array => ['key' => $key, 'done' => $done],
+            array_keys($steps),
+            array_values($steps),
+        );
     }
 }

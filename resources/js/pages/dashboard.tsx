@@ -1,6 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { Plus, Rows3 } from 'lucide-react';
 import { CardTile } from '@/components/cards/card-tile';
+import { SetupChecklist } from '@/components/dashboard/setup-checklist';
+import type { SetupStep } from '@/components/dashboard/setup-checklist';
 import { BarList } from '@/components/kit/bar-list';
 import { EmptyState } from '@/components/kit/empty-state';
 import { PageHeader } from '@/components/kit/page-header';
@@ -30,6 +32,7 @@ type Props = {
     recentItems: CollectionItem[];
     setProgress: { id: number; name: string; owned: number; total: number }[];
     activity: { grading: number; listings: number; wants: number };
+    setup: SetupStep[] | null;
 };
 
 export default function Dashboard({
@@ -42,30 +45,35 @@ export default function Dashboard({
     recentItems,
     setProgress,
     activity,
+    setup,
 }: Props) {
     if (totals.count === 0 && recentItems.length === 0) {
         return (
             <>
                 <Head title="Overview" />
                 <PageHeader title="Your collection" />
-                <EmptyState
-                    title="Start your collection"
-                    description="Add cards one at a time, type in a stack from one set with Quick add, or tick off what you own from a set checklist."
-                    action={
-                        <div className="flex flex-wrap justify-center gap-2">
-                            <Button asChild>
-                                <Link href={collection.create()}>
-                                    <Plus /> Add a card
-                                </Link>
-                            </Button>
-                            <Button asChild variant="outline">
-                                <Link href={collection.quickAdd()}>
-                                    <Rows3 /> Quick add a stack
-                                </Link>
-                            </Button>
-                        </div>
-                    }
-                />
+                {setup ? (
+                    <SetupChecklist steps={setup} />
+                ) : (
+                    <EmptyState
+                        title="Start your collection"
+                        description="Add cards one at a time, type in a stack from one set with Quick add, or tick off what you own from a set checklist."
+                        action={
+                            <div className="flex flex-wrap justify-center gap-2">
+                                <Button asChild>
+                                    <Link href={collection.create()}>
+                                        <Plus /> Add a card
+                                    </Link>
+                                </Button>
+                                <Button asChild variant="outline">
+                                    <Link href={collection.quickAdd()}>
+                                        <Rows3 /> Quick add a stack
+                                    </Link>
+                                </Button>
+                            </div>
+                        }
+                    />
+                )}
             </>
         );
     }

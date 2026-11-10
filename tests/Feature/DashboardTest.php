@@ -3,6 +3,7 @@
 use App\Enums\ItemStatus;
 use App\Enums\UserRole;
 use App\Models\CollectionItem;
+use App\Models\StorageLocation;
 use App\Models\User;
 use App\Models\ValueSnapshot;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -30,6 +31,40 @@ test('the overview totals in-hand cards across the whole collection', function (
             ->where('totals.unvalued', 1)
             ->has('topItems', 2)
             ->has('history', 1));
+});
+
+test('an empty collection shows admins the setup steps, ticking off what exists', function () {
+    $admin = User::factory()->admin()->create();
+    StorageLocation::factory()->for($admin)->create();
+
+    $this->actingAs($admin)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('setup', [
+            ['key' => 'team', 'done' => false],
+            ['key' => 'storage', 'done' => true],
+            ['key' => 'tags', 'done' => false],
+            ['key' => 'sets', 'done' => false],
+            ['key' => 'import', 'done' => false],
+            ['key' => 'ebay', 'done' => false],
+        ]));
+});
+
+test('members are not asked to invite the team', function () {
+    $member = User::factory()->create();
+
+    $this->actingAs($member)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->where('setup.0.key', 'storage')->has('setup', 5));
+});
+
+test('the setup steps go away once the first card is added', function () {
+    $user = User::factory()->admin()->create();
+    CollectionItem::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->where('setup', null));
 });
 
 test('one value snapshot is captured per day for the whole collection', function () {
