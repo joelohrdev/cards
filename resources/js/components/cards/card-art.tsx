@@ -59,35 +59,36 @@ function CardBack({
         );
     }
 
-    return (
-        <div className="flex h-full w-full flex-col bg-muted p-[8%] text-foreground">
-            <div className="flex items-start justify-between gap-2">
-                <span
-                    className={cn(
-                        'font-display leading-none font-bold',
-                        size === 'lg' ? 'text-5xl' : 'text-3xl',
-                    )}
-                >
-                    {item.card.number}
+    /*
+     * Tiles already caption the card with its name and set, so the medium
+     * placeholder stays a quiet number and year. The top is left clear for
+     * the grade badge that sits over the art.
+     */
+    if (size === 'md') {
+        return (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-muted text-muted-foreground">
+                <span className="max-w-full truncate px-[8%] font-display text-3xl leading-none font-bold">
+                    #{item.card.number}
                 </span>
-                <span className="font-display text-xs font-semibold text-muted-foreground">
+                <span className="font-display text-xs font-semibold">
                     {item.card.set.year}
                 </span>
             </div>
-            <div className="mt-auto space-y-1">
-                <div className="h-px bg-foreground/15" />
-                <p
-                    className={cn(
-                        'line-clamp-2 font-display leading-tight font-semibold',
-                        size === 'lg' ? 'text-2xl' : 'text-base',
-                    )}
-                >
-                    {item.card.name}
-                </p>
-                <p className="line-clamp-1 text-[0.7rem] text-muted-foreground">
-                    {item.card.set.manufacturer} {item.card.set.name}
-                </p>
-            </div>
+        );
+    }
+
+    return (
+        <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted p-[8%] text-center text-foreground">
+            <span className="max-w-full truncate font-display text-6xl leading-none font-bold text-muted-foreground">
+                #{item.card.number}
+            </span>
+            <p className="line-clamp-2 font-display text-2xl leading-tight font-semibold">
+                {item.card.name}
+            </p>
+            <p className="line-clamp-1 text-sm text-muted-foreground">
+                {item.card.set.year} {item.card.set.manufacturer}{' '}
+                {item.card.set.name}
+            </p>
         </div>
     );
 }

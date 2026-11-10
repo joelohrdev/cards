@@ -161,7 +161,7 @@ export default function CollectionShow({
                 }
             />
 
-            <div className="grid gap-8 lg:grid-cols-[minmax(16rem,22rem)_1fr]">
+            <div className="grid gap-6 md:grid-cols-[15rem_1fr] lg:grid-cols-[minmax(16rem,22rem)_1fr] lg:gap-8">
                 <div className="space-y-3">
                     <div className="relative">
                         <CardArt
@@ -193,12 +193,12 @@ export default function CollectionShow({
                                         className="aspect-[5/7] w-full object-cover"
                                     />
                                 </button>
-                                <div className="absolute -top-2 -right-2 hidden gap-0.5 group-hover:flex">
+                                <div className="absolute -top-2 -right-2 hidden gap-1 group-hover:flex pointer-coarse:flex">
                                     {index > 0 && (
                                         <button
                                             type="button"
                                             title="Make primary photo"
-                                            className="rounded-full bg-card p-1 shadow ring-1 ring-border"
+                                            className="rounded-full bg-card p-1.5 shadow ring-1 ring-border"
                                             onClick={() =>
                                                 router.patch(
                                                     collection.images.update.url(
@@ -218,7 +218,7 @@ export default function CollectionShow({
                                     <button
                                         type="button"
                                         title="Delete photo"
-                                        className="rounded-full bg-card p-1 shadow ring-1 ring-border"
+                                        className="rounded-full bg-card p-1.5 shadow ring-1 ring-border"
                                         onClick={() =>
                                             router.delete(
                                                 collection.images.destroy.url({
@@ -258,7 +258,7 @@ export default function CollectionShow({
                 </div>
 
                 <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border lg:grid-cols-4">
                         {[
                             [
                                 'Worth',
@@ -471,7 +471,7 @@ export default function CollectionShow({
                     <h2 className="mb-3 font-display text-2xl font-bold">
                         Your other copies ({otherCopies.length})
                     </h2>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+                    <div className="grid grid-cols-3 gap-2 lg:grid-cols-5 xl:grid-cols-6">
                         {otherCopies.map((copy) => (
                             <CardTile key={copy.id} item={copy} />
                         ))}

@@ -117,8 +117,8 @@ export default function Dashboard({
                 </dl>
             </section>
 
-            <div className="grid gap-6 xl:grid-cols-3">
-                <Panel title="Value over time" className="xl:col-span-2">
+            <div className="grid gap-6 lg:grid-cols-3">
+                <Panel title="Value over time" className="lg:col-span-2">
                     <ValueChart points={history} />
                 </Panel>
 
@@ -176,7 +176,7 @@ export default function Dashboard({
                             See all by value
                         </Link>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+                    <div className="grid grid-cols-3 gap-2 lg:grid-cols-6">
                         {topItems.map((item) => (
                             <CardTile key={item.id} item={item} />
                         ))}
@@ -273,7 +273,7 @@ export default function Dashboard({
                         Browse collection
                     </Link>
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+                <div className="grid grid-cols-3 gap-2 lg:grid-cols-6">
                     {recentItems.map((item) => (
                         <CardTile key={item.id} item={item} />
                     ))}

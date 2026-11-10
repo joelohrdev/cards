@@ -156,7 +156,7 @@ export default function CollectionIndex({
         <>
             <Head title="Collection" />
 
-            <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
                     <h1 className="font-display text-4xl font-bold">
                         Collection
@@ -193,8 +193,8 @@ export default function CollectionIndex({
                 </form>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[15rem_1fr]">
-                <aside className="hidden lg:block">
+            <div className="grid gap-6 xl:grid-cols-[15rem_1fr]">
+                <aside className="hidden xl:block">
                     <div className="sticky top-24 max-h-[calc(100svh-7rem)] overflow-y-auto pr-1">
                         {filterPanel}
                     </div>
@@ -217,7 +217,7 @@ export default function CollectionIndex({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="lg:hidden"
+                            className="xl:hidden"
                             onClick={() => setFiltersOpen(true)}
                         >
                             <SlidersHorizontal /> Filters
@@ -365,7 +365,7 @@ export default function CollectionIndex({
                             }
                         />
                     ) : view === 'grid' ? (
-                        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6">
                             {items.data.map((item) => (
                                 <CardTile
                                     key={item.id}

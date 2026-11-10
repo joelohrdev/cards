@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     ChevronDown,
+    LifeBuoy,
     LogOut,
     Menu,
     Plus,
@@ -25,7 +26,7 @@ import {
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
-import { dashboard, logout } from '@/routes';
+import { dashboard, help, logout } from '@/routes';
 import collection from '@/routes/collection';
 import { edit as editProfile } from '@/routes/profile';
 import team from '@/routes/team';
@@ -42,6 +43,11 @@ function useActiveHref(): string | undefined {
         .filter((href) => isCurrentOrParentUrl(href))
         .sort((a, b) => b.length - a.length)[0];
 }
+
+/**
+ * Help lives in the account menu so the header stays short enough for a portrait iPad.
+ */
+const headerNavGroups = navGroups.filter((group) => group.title !== 'Help');
 
 const isGroupActive = (group: ShellNavGroup, activeHref?: string): boolean =>
     group.items.some((item) => toUrl(item.href) === activeHref);
@@ -79,18 +85,18 @@ function CountBadge({
 }
 
 const headerLinkClass =
-    'relative flex h-9 items-center gap-1 rounded-md px-3 text-sm font-medium text-rail-foreground/80 transition-colors hover:bg-rail-active hover:text-rail-foreground data-[state=open]:bg-rail-active data-[state=open]:text-rail-foreground';
+    'relative flex h-10 items-center gap-1 rounded-md px-2.5 text-[0.95rem] lg:px-3 font-medium text-rail-foreground/80 transition-colors hover:bg-rail-active hover:text-rail-foreground data-[state=open]:bg-rail-active data-[state=open]:text-rail-foreground';
 
 const headerActiveClass =
-    'text-rail-foreground after:absolute after:inset-x-3 after:-bottom-[13px] after:h-0.5 after:rounded-full after:bg-sidebar-primary';
+    'text-rail-foreground after:absolute after:inset-x-3 after:-bottom-3 after:h-0.5 after:rounded-full after:bg-sidebar-primary';
 
 function HeaderNav() {
     const activeHref = useActiveHref();
     const { approvalsWaiting } = usePage().props;
 
     return (
-        <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Main">
-            {navGroups.map((group) => {
+        <nav className="hidden items-center gap-0.5 md:flex" aria-label="Main">
+            {headerNavGroups.map((group) => {
                 const active = isGroupActive(group, activeHref);
 
                 if (group.items.length === 1) {
@@ -136,6 +142,7 @@ function HeaderNav() {
                                     key={item.title}
                                     asChild
                                     className={cn(
+                                        'pointer-coarse:py-2.5',
                                         toUrl(item.href) === activeHref &&
                                             'bg-accent font-medium',
                                     )}
@@ -161,7 +168,7 @@ function UserMenu() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger
-                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-rail-active font-display text-sm font-bold text-rail-foreground outline-none hover:ring-2 hover:ring-white/20"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-rail-active font-display text-sm font-bold text-rail-foreground outline-none hover:ring-2 hover:ring-white/20"
                 aria-label="Account"
             >
                 {auth.user.name.charAt(0).toUpperCase()}
@@ -176,21 +183,27 @@ function UserMenu() {
                     </p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="pointer-coarse:py-2.5">
+                    <Link href={help()}>
+                        <LifeBuoy />
+                        How to use Cards
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="pointer-coarse:py-2.5">
                     <Link href={editProfile()}>
                         <Settings />
                         Settings
                     </Link>
                 </DropdownMenuItem>
                 {auth.user.role === 'admin' && (
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild className="pointer-coarse:py-2.5">
                         <Link href={team.index()}>
                             <Users />
                             Team
                         </Link>
                     </DropdownMenuItem>
                 )}
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="pointer-coarse:py-2.5">
                     <Link
                         href={logout()}
                         as="button"
@@ -232,7 +245,7 @@ function MobileNav({ onNavigate }: { onNavigate: () => void }) {
                                     prefetch
                                     onClick={onNavigate}
                                     className={cn(
-                                        'flex items-center gap-3 rounded-md px-3 py-2 text-[0.95rem] font-medium text-rail-foreground/80 transition-colors hover:bg-rail-active hover:text-rail-foreground',
+                                        'flex items-center gap-3 rounded-md px-3 py-2.5 text-[0.95rem] font-medium text-rail-foreground/80 transition-colors hover:bg-rail-active hover:text-rail-foreground',
                                         toUrl(item.href) === activeHref &&
                                             'bg-rail-active text-rail-foreground',
                                     )}
@@ -296,7 +309,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="text-rail-foreground hover:bg-rail-active hover:text-rail-foreground lg:hidden"
+                        className="text-rail-foreground hover:bg-rail-active hover:text-rail-foreground md:hidden"
                         onClick={() => setMenuOpen(true)}
                         aria-label="Open navigation"
                     >
@@ -308,7 +321,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         className="mr-3 flex shrink-0 items-center gap-2.5"
                     >
                         <LogoMark className="h-7 text-rail-foreground" />
-                        <span className="hidden font-display text-lg leading-none font-bold sm:inline">
+                        <span className="hidden font-display text-lg leading-none font-bold sm:inline md:hidden xl:inline">
                             {name}
                         </span>
                     </Link>
@@ -320,7 +333,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             type="button"
                             onClick={() => setSearchOpen(true)}
                             aria-label="Find a card"
-                            className="flex h-9 items-center gap-2 rounded-md border border-white/15 bg-rail-active px-2.5 text-sm text-rail-muted transition-colors hover:text-rail-foreground xl:w-56 xl:px-3"
+                            className="flex h-10 items-center gap-2 rounded-md border border-white/15 bg-rail-active px-3 text-sm text-rail-muted transition-colors hover:text-rail-foreground xl:w-56 xl:px-3"
                         >
                             <Search className="size-4" />
                             <span className="hidden flex-1 text-left xl:inline">
@@ -331,10 +344,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             </kbd>
                         </button>
 
-                        <Button asChild size="sm" className="h-9">
+                        <Button asChild size="sm" className="h-10 px-3">
                             <Link href={collection.create()}>
                                 <Plus />
-                                <span className="hidden sm:inline">
+                                <span className="hidden sm:inline md:hidden lg:inline">
                                     Add card
                                 </span>
                             </Link>

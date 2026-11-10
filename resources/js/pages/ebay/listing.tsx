@@ -189,7 +189,7 @@ export default function EbayListingPage({
                 }
             />
 
-            <div className="grid gap-8 lg:grid-cols-[minmax(14rem,18rem)_1fr]">
+            <div className="grid gap-6 md:grid-cols-[13rem_1fr] lg:grid-cols-[minmax(14rem,18rem)_1fr] lg:gap-8">
                 <div className="space-y-3">
                     <div className="relative">
                         <CardArt
