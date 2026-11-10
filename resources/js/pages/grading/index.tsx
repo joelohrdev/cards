@@ -57,7 +57,6 @@ export default function GradingIndex({ open, completed, stats }: Props) {
 
             <PageHeader
                 title="Grading"
-                description="Track the cards you send to PSA, BGS, SGC and others, from packing to slabs back home."
                 actions={
                     <>
                         <Button

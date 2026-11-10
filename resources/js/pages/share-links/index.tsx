@@ -48,10 +48,7 @@ export default function ShareLinksIndex({ links, tags }: Props) {
         <>
             <Head title="Share links" />
 
-            <PageHeader
-                title="Share links"
-                description="Show your cards to another collector with a read-only page. No account needed to view it, and you can turn a link off at any time."
-            />
+            <PageHeader title="Share links" />
 
             <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
                 <Panel title="New share link" className="lg:self-start">

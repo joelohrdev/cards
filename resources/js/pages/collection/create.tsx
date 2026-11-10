@@ -14,10 +14,7 @@ export default function CollectionCreate({
     return (
         <>
             <Head title="Add a card" />
-            <PageHeader
-                title="Add a card"
-                description="Find the card in the shared catalog, or enter it new. Adding a big stack from one set? Quick add is faster."
-            />
+            <PageHeader title="Add a card" />
             <ItemForm options={options} prefillCard={prefillCard} />
         </>
     );

@@ -24,10 +24,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
 
     return (
         <>
-            <PageHeader
-                title="Settings"
-                description="Your profile, password and how the app looks."
-            />
+            <PageHeader title="Settings" />
 
             <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
                 <nav

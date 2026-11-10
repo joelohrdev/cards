@@ -67,10 +67,7 @@ export default function Tags({
     return (
         <>
             <Head title="Tags" />
-            <PageHeader
-                title="Tags"
-                description="Tags are shared labels: PC, flip, grading candidates, show finds. Search for a tag’s name to find its cards."
-            />
+            <PageHeader title="Tags" />
 
             <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
                 <div>

@@ -23,10 +23,7 @@ export default function LocationsIndex({
     return (
         <>
             <Head title="Storage" />
-            <PageHeader
-                title="Storage"
-                description="Map your boxes, binders and cases so every card has an address. Nest rows or pages inside a box for exact spots."
-            />
+            <PageHeader title="Storage" />
 
             <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
                 <div>

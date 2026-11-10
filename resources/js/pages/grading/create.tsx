@@ -27,7 +27,6 @@ export default function GradingCreate({ graders }: { graders: Option[] }) {
                     </Link>
                 }
                 title="New submission"
-                description="Start with the basics. You’ll add cards and fees on the next page."
             />
 
             <Panel className="max-w-2xl">

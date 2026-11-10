@@ -320,7 +320,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         href={dashboard()}
                         className="mr-3 flex shrink-0 items-center gap-2.5"
                     >
-                        <LogoMark className="h-7 text-rail-foreground" />
+                        <LogoMark className="size-8" />
                         <span className="hidden font-display text-lg leading-none font-bold sm:inline md:hidden xl:inline">
                             {name}
                         </span>

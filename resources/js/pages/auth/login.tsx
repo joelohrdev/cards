@@ -102,5 +102,4 @@ export default function Login({ status, canResetPassword }: Props) {
 
 Login.layout = {
     title: 'Log in',
-    description: 'Use the email and password for your collection.',
 };

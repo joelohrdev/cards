@@ -27,10 +27,7 @@ export default function ImportsIndex({
         <>
             <Head title="Import cards" />
 
-            <PageHeader
-                title="Import cards"
-                description="Bring in a spreadsheet of cards. You’ll match its columns to card fields before anything is saved."
-            />
+            <PageHeader title="Import cards" />
 
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
                 <Panel title="Upload a CSV file">

@@ -16,7 +16,7 @@ export default function PublicLayout({
         <div className="flex min-h-svh flex-col bg-background">
             <header className="no-print bg-rail text-rail-foreground">
                 <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-3 px-4 sm:px-6">
-                    <LogoMark className="h-7 text-rail-foreground" />
+                    <LogoMark className="size-8" />
                     <span className="font-display text-lg leading-none font-bold">
                         {name}
                     </span>

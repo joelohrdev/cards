@@ -1,39 +1,37 @@
 import { cn } from '@/lib/utils';
 
 /**
- * A card in a top loader: the app mark.
+ * Two fanned cards on a rounded green tile: the app mark. It matches
+ * public/favicon.svg and the iPad home-screen icon.
  */
 export function LogoMark({ className }: { className?: string }) {
     return (
         <svg
-            viewBox="0 0 28 36"
+            viewBox="0 0 32 32"
             aria-hidden="true"
-            className={cn('h-8 w-auto', className)}
+            className={cn('size-8 shrink-0', className)}
         >
+            <rect width="32" height="32" rx="8" className="fill-[#3fa27f]" />
             <rect
-                x="1"
-                y="1"
-                width="26"
-                height="34"
-                rx="3"
-                className="fill-none stroke-current opacity-50"
-                strokeWidth="1.5"
+                x="9"
+                y="6"
+                width="14"
+                height="20"
+                rx="2"
+                fill="none"
+                stroke="#fff"
+                strokeOpacity="0.55"
+                strokeWidth="2"
+                transform="rotate(-12 16 16)"
             />
             <rect
-                x="5"
-                y="5"
-                width="18"
-                height="26"
-                rx="1.5"
-                className="fill-current"
-            />
-            <rect
-                x="8"
-                y="22"
-                width="12"
-                height="5"
-                rx="0.5"
-                className="fill-slab"
+                x="9"
+                y="6"
+                width="14"
+                height="20"
+                rx="2"
+                fill="#fff"
+                transform="rotate(8 16 16)"
             />
         </svg>
     );

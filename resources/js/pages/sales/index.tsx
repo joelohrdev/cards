@@ -87,7 +87,6 @@ export default function SalesIndex({
 
             <PageHeader
                 title="Sales"
-                description="Every card you’ve sold, with fees, shipping, and profit over what you paid."
                 actions={
                     <>
                         <NativeSelect

@@ -17,10 +17,7 @@ export default function ExportsIndex({ counts }: Props) {
         <>
             <Head title="Export" />
 
-            <PageHeader
-                title="Export your collection"
-                description="Keep a backup, hand your insurer an inventory, or move your data somewhere else. It’s your data."
-            />
+            <PageHeader title="Export your collection" />
 
             <div className="grid gap-6 lg:grid-cols-2">
                 <Panel title="Spreadsheet backup (CSV)">

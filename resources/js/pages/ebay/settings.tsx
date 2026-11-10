@@ -54,7 +54,6 @@ export default function EbaySettings(props: Props) {
                     </Link>
                 }
                 title="eBay settings"
-                description="Connect your eBay seller account and choose how your cards ship. Every listing uses these settings."
             />
 
             {!configured ? (

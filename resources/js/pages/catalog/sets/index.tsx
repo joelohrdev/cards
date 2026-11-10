@@ -46,7 +46,6 @@ export default function SetsIndex({
             <Head title="Sets & checklists" />
             <PageHeader
                 title="Sets & checklists"
-                description="The catalog is shared by everyone using this app. Paste a set’s checklist once, then tick off the cards you own."
                 actions={
                     <Button asChild>
                         <Link href={sets.create()}>

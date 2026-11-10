@@ -46,10 +46,7 @@ export default function WantList({ entries }: { entries: Entry[] }) {
     return (
         <>
             <Head title="Want list" />
-            <PageHeader
-                title="Want list"
-                description="Cards you’re hunting, with the most you’ll pay. Add cards from any set checklist with “Want these”. Open it on your phone at a show."
-            />
+            <PageHeader title="Want list" />
 
             {entries.length === 0 ? (
                 <EmptyState

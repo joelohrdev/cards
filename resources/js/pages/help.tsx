@@ -462,10 +462,7 @@ export default function Help() {
     return (
         <>
             <Head title="Help" />
-            <PageHeader
-                title="How to use Cards"
-                description="Everything the app does, in the order most people need it."
-            />
+            <PageHeader title="How to use Cards" />
 
             <div className="grid gap-6 xl:grid-cols-[14rem_1fr]">
                 <nav
