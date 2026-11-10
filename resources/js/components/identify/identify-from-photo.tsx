@@ -23,7 +23,7 @@ function readCookie(name: string): string | null {
 }
 
 /**
- * "Identify from photo": opens the camera or file picker, asks the vision model what card it
+ * "Use a photo": opens the camera or file picker, asks the vision model what card it
  * is, and hands back a suggestion with likely catalog matches.
  */
 export function IdentifyFromPhoto({
@@ -140,7 +140,7 @@ export function IdentifyFromPhoto({
                 disabled={working}
             >
                 {working ? <Spinner /> : <ScanSearch />}
-                {working ? 'Reading the card…' : 'Identify from photo'}
+                {working ? 'Reading the card…' : 'Use a photo'}
             </Button>
             <input
                 ref={input}

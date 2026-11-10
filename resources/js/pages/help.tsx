@@ -105,10 +105,10 @@ const sections: Section[] = [
                 </p>
                 <Steps>
                     <li>
-                        Under “Which card?”, use <em>Find in catalog</em> to
-                        search by player, year, set or number. If the card isn’t
-                        there, switch to <em>New card</em>, pick or create the
-                        set, and type the card number and player.
+                        Under “Which card?”, search by player, year, set or
+                        number. If nobody has added the card yet, choose{' '}
+                        <em>Enter it by hand</em>, pick or create the set, and
+                        type the card number and player.
                     </li>
                     <li>
                         Add a front and back photo if you have them. JPG, PNG or
@@ -130,13 +130,6 @@ const sections: Section[] = [
                         filled in for the next card.
                     </li>
                 </Steps>
-                <p>
-                    <strong>Identify from photo</strong> reads a picture of the
-                    card and fills in what it can: year, set, number, player
-                    and, for slabs, the grade. Always check the result before
-                    saving. It needs an Anthropic API key in the server
-                    settings.
-                </p>
                 <p>
                     <strong>Several copies?</strong> Set the quantity. Each copy
                     is tracked on its own so you can sell or grade them

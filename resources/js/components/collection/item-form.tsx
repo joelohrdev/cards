@@ -10,6 +10,7 @@ import type {
     PickedCard,
     PickedSet,
 } from '@/components/collection/card-picker';
+import { CardSearchHelp } from '@/components/collection/card-search-help';
 import { PhotoSlot } from '@/components/collection/photo-slot';
 import { TagInput } from '@/components/collection/tag-input';
 import { CertLookup } from '@/components/grading/cert-lookup';
@@ -64,6 +65,12 @@ type ItemFormData = {
     photo: File | null;
     back_photo: File | null;
 };
+
+/**
+ * "Use a photo" (identify a card from a picture) is hidden for now. Flip this to
+ * bring the button back on the Add a card page; the help page mentions it too.
+ */
+const showPhotoIdentification = false;
 
 /**
  * Shared add/edit form for a card in the collection.
@@ -278,11 +285,11 @@ export function ItemForm({
         >
             <div className="space-y-6">
                 <Panel
-                    title="Which card?"
-                    actions={
-                        editing ? undefined : (
-                            <IdentifyFromPhoto onResult={applySuggestion} />
-                        )
+                    title={
+                        <span className="flex items-center gap-1">
+                            Which card?
+                            {!editing && <CardSearchHelp />}
+                        </span>
                     }
                 >
                     {editing ? (
@@ -324,6 +331,13 @@ export function ItemForm({
                                 }}
                                 setDraft={setDraft}
                                 onSetDraftChange={setSetDraft}
+                                scanAction={
+                                    showPhotoIdentification ? (
+                                        <IdentifyFromPhoto
+                                            onResult={applySuggestion}
+                                        />
+                                    ) : undefined
+                                }
                                 sports={options.sports}
                                 errors={errorBag}
                             />

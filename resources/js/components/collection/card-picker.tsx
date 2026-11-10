@@ -1,11 +1,10 @@
-import { Check, Search } from 'lucide-react';
+import { ArrowLeft, PencilLine, Search } from 'lucide-react';
 import { useState } from 'react';
 import { CardFlags } from '@/components/cards/card-flags';
 import { Field, NativeSelect } from '@/components/kit/field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLookup } from '@/hooks/use-lookup';
-import { cn } from '@/lib/utils';
 import catalog from '@/routes/catalog';
 import type {
     CardSetSummary,
@@ -52,7 +51,8 @@ export const emptyCardDraft: NewCardDraft = {
 };
 
 /**
- * Find a card in the shared catalog, or describe a new one (in an existing or new set).
+ * Search for the card first; entering it by hand (in an existing or new set) is the
+ * fallback when nobody has added it yet. scanAction sits beside "Enter it by hand".
  */
 export function CardPicker({
     picked,
@@ -67,6 +67,7 @@ export function CardPicker({
     onSetDraftChange,
     sports,
     errors,
+    scanAction,
 }: {
     picked: PickedCard | null;
     onPick: (card: PickedCard | null) => void;
@@ -80,6 +81,7 @@ export function CardPicker({
     onSetDraftChange: (draft: NewSetDraft | null) => void;
     sports: Option[];
     errors: Record<string, string | undefined>;
+    scanAction?: React.ReactNode;
 }) {
     const [query, setQuery] = useState('');
     const [setQueryText, setSetQueryText] = useState('');
@@ -102,28 +104,22 @@ export function CardPicker({
 
     return (
         <div className="space-y-4">
-            <div
-                className="flex rounded-lg border bg-muted p-1 text-sm"
-                role="tablist"
-            >
-                {(['existing', 'new'] as const).map((option) => (
-                    <button
-                        key={option}
+            {mode === 'new' && (
+                <div className="flex items-center justify-between gap-3">
+                    <p className="flex items-center gap-2 text-sm font-medium">
+                        <PencilLine className="size-4 text-muted-foreground" />
+                        Entering the card by hand
+                    </p>
+                    <Button
                         type="button"
-                        role="tab"
-                        aria-selected={mode === option}
-                        onClick={() => onModeChange(option)}
-                        className={cn(
-                            'flex-1 rounded-md px-3 py-1.5 font-medium text-muted-foreground',
-                            mode === option &&
-                                'bg-card text-foreground shadow-xs',
-                        )}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onModeChange('existing')}
                     >
-                        {option === 'existing' ? 'Find in catalog' : 'New card'}
-                    </button>
-                ))}
-            </div>
-
+                        <ArrowLeft /> Search instead
+                    </Button>
+                </div>
+            )}
             {mode === 'existing' && picked && (
                 <div className="flex items-start justify-between gap-3 rounded-lg border border-primary/40 bg-primary/5 p-3">
                     <div>
@@ -158,9 +154,9 @@ export function CardPicker({
                             autoFocus
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
-                            placeholder="e.g. 1989 upper deck griffey, or prizm #1"
-                            className="h-11 pl-9"
-                            aria-label="Search the catalog"
+                            placeholder="Player, year, set or card number already in the app"
+                            className="h-12 pl-9 text-base"
+                            aria-label="Search for the card"
                         />
                     </div>
                     {errors.card && (
@@ -172,14 +168,8 @@ export function CardPicker({
                         <ul className="mt-2 max-h-80 divide-y overflow-y-auto rounded-lg border bg-card">
                             {cardResults.data.cards.length === 0 && (
                                 <li className="p-4 text-sm text-muted-foreground">
-                                    Not in the catalog yet.{' '}
-                                    <button
-                                        type="button"
-                                        className="font-medium text-primary hover:underline"
-                                        onClick={() => onModeChange('new')}
-                                    >
-                                        Add it as a new card
-                                    </button>
+                                    No match. Check the spelling, or enter it by
+                                    hand below.
                                 </li>
                             )}
                             {cardResults.data.cards.map((card) => (
@@ -187,7 +177,7 @@ export function CardPicker({
                                     <button
                                         type="button"
                                         onClick={() => onPick(card)}
-                                        className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent"
+                                        className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-accent"
                                     >
                                         <span className="w-14 shrink-0 font-display text-lg font-bold text-muted-foreground">
                                             #{card.number}
@@ -210,6 +200,16 @@ export function CardPicker({
                             ))}
                         </ul>
                     )}
+                    <div className="mt-3 flex flex-wrap items-start gap-2">
+                        {scanAction}
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => onModeChange('new')}
+                        >
+                            <PencilLine /> Enter it by hand
+                        </Button>
+                    </div>
                 </div>
             )}
 
@@ -461,13 +461,6 @@ export function CardPicker({
                         </div>
                     </div>
                 </div>
-            )}
-
-            {mode === 'existing' && picked && (
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Check className="size-3.5 text-primary" /> Card details
-                    come from the shared catalog.
-                </p>
             )}
         </div>
     );
