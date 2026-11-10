@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ItemStatus;
+use App\Enums\UserRole;
 use App\Models\CollectionItem;
 use App\Models\User;
 use App\Models\ValueSnapshot;
@@ -53,4 +54,18 @@ test('collector accounts can be created from the command line', function () {
 
     expect($user->email_verified_at)->not->toBeNull();
     $this->post(route('login.store'), ['email' => 'pat@example.com', 'password' => 'secret-pass'])->assertRedirect(route('dashboard'));
+});
+
+test('the first account created from the command line is an admin', function () {
+    $this->artisan('cards:create-user', ['email' => 'pat@example.com', 'name' => 'Pat'])->assertSuccessful();
+
+    expect(User::query()->where('email', 'pat@example.com')->sole()->role)->toBe(UserRole::Admin);
+});
+
+test('accounts created once an admin exists are members', function () {
+    User::factory()->admin()->create();
+
+    $this->artisan('cards:create-user', ['email' => 'sam@example.com', 'name' => 'Sam'])->assertSuccessful();
+
+    expect(User::query()->where('email', 'sam@example.com')->sole()->role)->toBe(UserRole::Member);
 });

@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Collection\CaptureValueSnapshot;
+use App\Enums\UserRole;
 use App\Models\EbayAccount;
 use App\Models\User;
 use App\Services\Ebay\EbayException;
@@ -25,9 +26,16 @@ Artisan::command('cards:create-user {email} {name} {--password=}', function (str
         'name' => $name,
         'password' => Hash::make($password),
         'email_verified_at' => $user->email_verified_at ?? now(),
-    ])->save();
+    ]);
 
-    $this->info("Account ready for {$email}.");
+    // Without an admin nobody can invite the rest of the team, so the first account becomes one.
+    if (! User::query()->where('role', UserRole::Admin)->exists()) {
+        $user->role = UserRole::Admin;
+    }
+
+    $user->save();
+
+    $this->info("Account ready for {$email}".($user->isAdmin() ? ' (admin).' : '.'));
 
     if (! $this->option('password')) {
         $this->line("Temporary password: {$password}");
