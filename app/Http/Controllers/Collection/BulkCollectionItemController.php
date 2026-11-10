@@ -97,7 +97,7 @@ class BulkCollectionItemController extends Controller
      */
     private function delete(Builder $items): void
     {
-        $paths = ItemImage::query()->whereIn('collection_item_id', (clone $items)->select('id'))->pluck('path')->all();
+        $paths = ItemImage::query()->whereIn('collection_item_id', (clone $items)->select('id'))->get()->flatMap->files()->all();
         $items->delete();
         Storage::disk(ItemImage::DISK)->delete($paths);
     }

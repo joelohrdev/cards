@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Collection;
 
 use App\Actions\Collection\SaveCollectionItem;
+use App\Actions\Collection\StoreCardPhoto;
 use App\Enums\ImageSide;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Collection\CollectionItemRequest;
@@ -104,7 +105,7 @@ class CollectionItemController extends Controller
     /**
      * Add one or more copies of a card to the collection.
      */
-    public function store(CollectionItemRequest $request, SaveCollectionItem $saveCollectionItem): RedirectResponse
+    public function store(CollectionItemRequest $request, SaveCollectionItem $saveCollectionItem, StoreCardPhoto $storeCardPhoto): RedirectResponse
     {
         $data = $request->validated();
         $quantity = (int) ($data['quantity'] ?? 1);
@@ -117,11 +118,7 @@ class CollectionItemController extends Controller
 
             foreach (['photo' => ImageSide::Front, 'back_photo' => ImageSide::Back] as $field => $side) {
                 if ($request->hasFile($field)) {
-                    $item->images()->create([
-                        'path' => $request->file($field)->store('cards/'.$item->user_id, ItemImage::DISK),
-                        'side' => $side,
-                        'position' => $item->images()->count(),
-                    ]);
+                    $storeCardPhoto->handle($item, $request->file($field), $side, $item->images()->count());
                 }
             }
         }
@@ -239,7 +236,7 @@ class CollectionItemController extends Controller
      */
     public function destroy(CollectionItem $item): RedirectResponse
     {
-        $paths = $item->images()->pluck('path')->all();
+        $paths = $item->images()->get()->flatMap->files()->all();
         $item->delete();
         Storage::disk(ItemImage::DISK)->delete($paths);
 

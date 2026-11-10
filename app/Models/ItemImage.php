@@ -16,12 +16,14 @@ use Illuminate\Support\Facades\Storage;
  * @property int $id
  * @property int $collection_item_id
  * @property string $path
+ * @property string|null $thumb_path
  * @property ImageSide $side
  * @property int $position
  * @property-read string $url
+ * @property-read string $thumb_url
  */
-#[Fillable(['path', 'side', 'position'])]
-#[Appends(['url'])]
+#[Fillable(['path', 'thumb_path', 'side', 'position'])]
+#[Appends(['url', 'thumb_url'])]
 class ItemImage extends Model
 {
     /** @use HasFactory<ItemImageFactory> */
@@ -54,5 +56,25 @@ class ItemImage extends Model
     protected function url(): Attribute
     {
         return Attribute::get(fn (): string => Storage::disk(self::DISK)->url($this->path));
+    }
+
+    /**
+     * The small version for grids, or the full photo for images stored before thumbnails existed.
+     *
+     * @return Attribute<string, never>
+     */
+    protected function thumbUrl(): Attribute
+    {
+        return Attribute::get(fn (): string => Storage::disk(self::DISK)->url($this->thumb_path ?? $this->path));
+    }
+
+    /**
+     * Every stored file for this image, for deleting alongside the record.
+     *
+     * @return list<string>
+     */
+    public function files(): array
+    {
+        return array_values(array_filter([$this->path, $this->thumb_path]));
     }
 }

@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { money, shortDate } from '@/lib/format';
+import { shrinkPhoto } from '@/lib/shrink-photo';
 import { cn } from '@/lib/utils';
 import collection from '@/routes/collection';
 import comps from '@/routes/comps';
@@ -94,14 +95,18 @@ export default function CollectionShow({
             ? item.estimated_value - item.purchase_price
             : null;
 
-    function upload(files: FileList | null) {
+    async function upload(files: FileList | null) {
         if (!files?.length) {
             return;
         }
 
+        const images = await Promise.all(
+            Array.from(files).map((file) => shrinkPhoto(file)),
+        );
+
         router.post(
             collection.images.store.url(item.id),
-            { images: Array.from(files) },
+            { images },
             { forceFormData: true, preserveScroll: true },
         );
     }

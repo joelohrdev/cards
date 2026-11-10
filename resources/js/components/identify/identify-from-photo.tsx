@@ -3,13 +3,14 @@ import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useLookup } from '@/hooks/use-lookup';
+import { shrinkPhoto } from '@/lib/shrink-photo';
 import { cn } from '@/lib/utils';
 import identify from '@/routes/identify';
 import type { PhotoSuggestion } from '@/types';
 
 /**
- * Longest edge sent to the vision model. Larger photos are scaled down before upload;
- * the original file is still handed back to the caller.
+ * Longest edge sent to the vision model. The scaled-down photo is also what the
+ * caller gets back to save as the card's front.
  */
 const MAX_EDGE = 1568;
 
@@ -19,43 +20,6 @@ function readCookie(name: string): string | null {
         .find((entry) => entry.startsWith(`${name}=`));
 
     return match ? decodeURIComponent(match.slice(name.length + 1)) : null;
-}
-
-/**
- * Scale a photo down to MAX_EDGE as a JPEG so uploads stay small and fast.
- */
-async function downscale(file: File): Promise<Blob> {
-    try {
-        const bitmap = await createImageBitmap(file);
-        const scale = Math.min(
-            1,
-            MAX_EDGE / Math.max(bitmap.width, bitmap.height),
-        );
-
-        if (
-            scale === 1 &&
-            file.size < 2_000_000 &&
-            ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
-        ) {
-            bitmap.close();
-
-            return file;
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(bitmap.width * scale);
-        canvas.height = Math.round(bitmap.height * scale);
-        canvas
-            .getContext('2d')
-            ?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-        bitmap.close();
-
-        return await new Promise<Blob>((resolve) =>
-            canvas.toBlob((blob) => resolve(blob ?? file), 'image/jpeg', 0.85),
-        );
-    } catch {
-        return file;
-    }
 }
 
 /**
@@ -101,13 +65,9 @@ export function IdentifyFromPhoto({
         setMessage(null);
 
         try {
-            const photo = await downscale(file);
+            const photo = await shrinkPhoto(file, MAX_EDGE);
             const body = new FormData();
-            body.append(
-                'photo',
-                photo,
-                photo === file ? file.name : 'card.jpg',
-            );
+            body.append('photo', photo, photo.name);
 
             const response = await fetch(identify.photo.store.url(), {
                 method: 'POST',
@@ -126,14 +86,7 @@ export function IdentifyFromPhoto({
             };
 
             if (response.ok && json.suggestion) {
-                onResult(
-                    json.suggestion,
-                    photo instanceof File
-                        ? photo
-                        : new File([photo], 'card.jpg', {
-                              type: photo.type || 'image/jpeg',
-                          }),
-                );
+                onResult(json.suggestion, photo);
                 setMessage({
                     tone: 'ok',
                     text:

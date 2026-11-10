@@ -230,7 +230,7 @@ class SaleController extends Controller
             'item' => [
                 'id' => $item->id,
                 'title' => $item->title(),
-                'image' => $item->frontImage?->url,
+                'image' => $item->frontImage?->thumb_url,
                 'card' => ['number' => $item->card->number, 'name' => $item->card->name],
             ],
         ];

@@ -1,5 +1,6 @@
 import { ImagePlus, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { shrinkPhoto } from '@/lib/shrink-photo';
 import { cn } from '@/lib/utils';
 
 /**
@@ -81,9 +82,10 @@ export function PhotoSlot({
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
-                onChange={(event) => {
-                    onChange(event.target.files?.[0] ?? null);
+                onChange={async (event) => {
+                    const picked = event.target.files?.[0] ?? null;
                     event.target.value = '';
+                    onChange(picked ? await shrinkPhoto(picked) : null);
                 }}
             />
         </div>

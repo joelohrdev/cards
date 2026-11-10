@@ -71,7 +71,7 @@ class CollectionItemResource extends JsonResource
                 'name' => $tag->name,
                 'color' => $tag->color,
             ])->values()),
-            'image' => $this->whenLoaded('frontImage', fn () => $this->frontImage?->url),
+            'image' => $this->whenLoaded('frontImage', fn () => $this->frontImage?->thumb_url),
             'images' => $this->whenLoaded('images', fn () => $this->images->map(fn (ItemImage $image): array => [
                 'id' => $image->id,
                 'url' => $image->url,

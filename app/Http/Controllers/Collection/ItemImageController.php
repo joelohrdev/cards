@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Collection;
 
+use App\Actions\Collection\StoreCardPhoto;
 use App\Enums\ImageSide;
 use App\Http\Controllers\Controller;
 use App\Models\CollectionItem;
@@ -17,7 +18,7 @@ class ItemImageController extends Controller
     /**
      * Upload photos of a card.
      */
-    public function store(Request $request, CollectionItem $item): RedirectResponse
+    public function store(Request $request, CollectionItem $item, StoreCardPhoto $storeCardPhoto): RedirectResponse
     {
         $validated = $request->validate([
             'images' => ['required', 'array', 'min:1', 'max:6'],
@@ -29,17 +30,13 @@ class ItemImageController extends Controller
         $existing = $item->images()->count();
 
         foreach ($validated['images'] as $index => $file) {
-            $side = $validated['side'] ?? match ($existing + $index) {
-                0 => ImageSide::Front->value,
-                1 => ImageSide::Back->value,
-                default => ImageSide::Other->value,
+            $side = isset($validated['side']) ? ImageSide::from($validated['side']) : match ($existing + $index) {
+                0 => ImageSide::Front,
+                1 => ImageSide::Back,
+                default => ImageSide::Other,
             };
 
-            $item->images()->create([
-                'path' => $file->store('cards/'.$item->user_id, ItemImage::DISK),
-                'side' => $side,
-                'position' => $existing === 0 && $index === 0 ? 0 : ++$position,
-            ]);
+            $storeCardPhoto->handle($item, $file, $side, $existing === 0 && $index === 0 ? 0 : ++$position);
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Photos uploaded.']);
@@ -67,7 +64,7 @@ class ItemImageController extends Controller
     {
         abort_unless($image->collection_item_id === $item->id, 404);
 
-        Storage::disk(ItemImage::DISK)->delete($image->path);
+        Storage::disk(ItemImage::DISK)->delete($image->files());
         $image->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Photo deleted.']);

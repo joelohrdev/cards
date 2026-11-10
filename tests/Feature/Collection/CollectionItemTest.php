@@ -217,7 +217,77 @@ test('photos can be uploaded, reordered and deleted on a card', function () {
     expect($item->images()->first()->id)->toBe($back->id);
 
     $this->actingAs($user)->delete(route('collection.images.destroy', [$item, $front]))->assertSessionHasNoErrors();
-    Storage::disk('public')->assertMissing($front->path);
+    Storage::disk('public')->assertMissing([$front->path, $front->thumb_path]);
+});
+
+test('uploaded photos are stored as WebP, capped in size, with a grid thumbnail', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+    $item = CollectionItem::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->post(route('collection.images.store', $item), ['images' => [UploadedFile::fake()->image('camera.jpg', 4000, 3000)]])
+        ->assertSessionHasNoErrors();
+
+    $image = $item->images()->sole();
+    $photo = getimagesizefromstring(Storage::disk('public')->get($image->path));
+    $thumb = getimagesizefromstring(Storage::disk('public')->get($image->thumb_path));
+
+    expect($photo)->toMatchArray([0 => 2000, 1 => 1500, 'mime' => 'image/webp'])
+        ->and($thumb)->toMatchArray([0 => 480, 1 => 360, 'mime' => 'image/webp']);
+});
+
+test('small photos are converted to WebP without being enlarged', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+    $item = CollectionItem::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->post(route('collection.images.store', $item), ['images' => [UploadedFile::fake()->image('small.png', 300, 420)]])
+        ->assertSessionHasNoErrors();
+
+    $image = $item->images()->sole();
+
+    expect(getimagesizefromstring(Storage::disk('public')->get($image->path)))->toMatchArray([0 => 300, 1 => 420, 'mime' => 'image/webp'])
+        ->and(getimagesizefromstring(Storage::disk('public')->get($image->thumb_path)))->toMatchArray([0 => 300, 1 => 420]);
+});
+
+test('the collection grid uses the thumbnail and the card page the full photo', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+    $item = CollectionItem::factory()->for($user)->create();
+    $this->actingAs($user)->post(route('collection.images.store', $item), ['images' => [UploadedFile::fake()->image('front.jpg')]]);
+    $image = $item->images()->sole();
+
+    $this->actingAs($user)
+        ->get(route('collection.index'))
+        ->assertInertia(fn (Assert $page) => $page->where('items.data.0.image', Storage::disk('public')->url($image->thumb_path)));
+
+    $this->actingAs($user)
+        ->get(route('collection.show', $item))
+        ->assertInertia(fn (Assert $page) => $page->where('item.images.0.url', Storage::disk('public')->url($image->path)));
+});
+
+test('photos stored before thumbnails existed still show in the grid', function () {
+    $user = User::factory()->create();
+    $item = CollectionItem::factory()->for($user)->create();
+    $image = $item->images()->create(['path' => 'cards/old.jpg', 'side' => 'front', 'position' => 0]);
+
+    $this->actingAs($user)
+        ->get(route('collection.index'))
+        ->assertInertia(fn (Assert $page) => $page->where('items.data.0.image', $image->url));
+});
+
+test('deleting a card removes its photo files and thumbnails', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+    $item = CollectionItem::factory()->for($user)->create();
+    $this->actingAs($user)->post(route('collection.images.store', $item), ['images' => [UploadedFile::fake()->image('front.jpg')]]);
+    $image = $item->images()->sole();
+
+    $this->actingAs($user)->delete(route('collection.destroy', $item))->assertRedirect(route('collection.index'));
+
+    Storage::disk('public')->assertMissing([$image->path, $image->thumb_path]);
 });
 
 test('a back photo sent with a new card becomes its back image', function () {

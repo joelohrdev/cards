@@ -187,7 +187,7 @@ class ShowcaseController extends Controller
             'grade' => $item->grade,
             'condition_label' => $item->conditionLabel(),
             'estimated_value' => $showValues ? $item->estimated_value : null,
-            'image' => $item->images->first()?->url,
+            'image' => $item->images->first()?->thumb_url,
             'images' => $item->images->map(fn (ItemImage $image): array => ['url' => $image->url, 'side' => $image->side->value])->values(),
         ];
     }
