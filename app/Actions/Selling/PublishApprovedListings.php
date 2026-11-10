@@ -16,7 +16,7 @@ class PublishApprovedListings
     public function __construct(private ListingPublisher $publisher) {}
 
     /**
-     * Check one listing, or every listing waiting on approval (after a teammate leaves, say).
+     * Check one listing, or every listing waiting on approval (after a user is removed, say).
      */
     public function handle(?EbayListing $listing = null): void
     {

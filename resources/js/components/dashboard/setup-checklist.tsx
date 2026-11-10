@@ -10,10 +10,10 @@ import imports from '@/routes/imports';
 import locations from '@/routes/locations';
 import sets from '@/routes/sets';
 import tags from '@/routes/tags';
-import team from '@/routes/team';
+import users from '@/routes/users';
 
 export type SetupStep = {
-    key: 'team' | 'storage' | 'tags' | 'sets' | 'import' | 'ebay';
+    key: 'users' | 'storage' | 'tags' | 'sets' | 'import' | 'ebay';
     done: boolean;
 };
 
@@ -27,11 +27,11 @@ const STEP_DETAILS: Record<
         optional?: boolean;
     }
 > = {
-    team: {
-        title: 'Invite your team',
+    users: {
+        title: 'Invite users',
         detail: 'Each person gets an email link to set up their account.',
         action: 'Invite',
-        href: team.index(),
+        href: users.index(),
     },
     storage: {
         title: 'Set up storage',

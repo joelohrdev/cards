@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Actions\Team\AcceptInvitation;
+use App\Actions\Users\AcceptInvitation;
 use App\Concerns\PasswordValidationRules;
 use App\Http\Controllers\Controller;
 use App\Models\Invitation;

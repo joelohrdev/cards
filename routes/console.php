@@ -28,7 +28,7 @@ Artisan::command('cards:create-user {email} {name} {--password=}', function (str
         'email_verified_at' => $user->email_verified_at ?? now(),
     ]);
 
-    // Without an admin nobody can invite the rest of the team, so the first account becomes one.
+    // Without an admin nobody can invite the other users, so the first account becomes one.
     if (! User::query()->where('role', UserRole::Admin)->exists()) {
         $user->role = UserRole::Admin;
     }

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Ask the rest of the team to approve putting a draft on eBay. Admins are never asked, and
+ * Ask the other users to approve putting a draft on eBay. Admins are never asked, and
  * nobody approves their own listing. With nobody left to ask, it is published straight away.
  */
 class RequestListingApproval

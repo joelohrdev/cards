@@ -15,14 +15,14 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class TeamController extends Controller
+class UserController extends Controller
 {
     /**
-     * The team, its open invitations, and the form to invite someone.
+     * Everyone who can sign in, open invitations, and the form to invite someone.
      */
     public function index(Request $request): Response
     {
-        return Inertia::render('settings/team', [
+        return Inertia::render('settings/users', [
             'members' => User::query()->orderBy('name')->get()->map(fn (User $member): array => [
                 'id' => $member->id,
                 'name' => $member->name,
@@ -60,11 +60,11 @@ class TeamController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$member->name} is now ".($member->isAdmin() ? 'an admin' : 'a member').'.']);
 
-        return to_route('team.index');
+        return to_route('users.index');
     }
 
     /**
-     * Remove someone from the team. The cards and records they added stay.
+     * Remove a user. The cards and records they added stay.
      */
     public function destroy(Request $request, User $member): RedirectResponse
     {
@@ -74,7 +74,7 @@ class TeamController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$member->name} was removed."]);
 
-        return to_route('team.index');
+        return to_route('users.index');
     }
 
     private function guardAgainstSelf(Request $request, User $member, string $message): void

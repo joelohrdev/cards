@@ -3,31 +3,31 @@
 use App\Enums\UserRole;
 use App\Models\Invitation;
 use App\Models\User;
-use App\Notifications\TeamInvitation;
+use App\Notifications\UserInvitation;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 
-test('members can’t manage the team', function () {
+test('members can’t manage users', function () {
     $member = User::factory()->create();
 
-    $this->actingAs($member)->get(route('team.index'))->assertForbidden();
-    $this->actingAs($member)->post(route('team.invitations.store'), ['email' => 'new@example.com', 'role' => 'member'])->assertForbidden();
+    $this->actingAs($member)->get(route('users.index'))->assertForbidden();
+    $this->actingAs($member)->post(route('users.invitations.store'), ['email' => 'new@example.com', 'role' => 'member'])->assertForbidden();
 
     expect(Invitation::query()->count())->toBe(0);
 });
 
-test('an admin sees the team and open invitations', function () {
+test('an admin sees the users and open invitations', function () {
     $admin = User::factory()->admin()->create();
     User::factory()->create();
     Invitation::factory()->for($admin, 'inviter')->create(['email' => 'pending@example.com']);
     Invitation::factory()->for($admin, 'inviter')->expired()->create();
 
     $this->actingAs($admin)
-        ->get(route('team.index'))
+        ->get(route('users.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('settings/team')
+            ->component('settings/users')
             ->has('members', 2)
             ->has('invitations', 1)
             ->where('invitations.0.email', 'pending@example.com'));
@@ -38,8 +38,8 @@ test('an admin can invite someone by email', function () {
     $admin = User::factory()->admin()->create();
 
     $this->actingAs($admin)
-        ->post(route('team.invitations.store'), ['email' => 'pat@example.com', 'role' => 'admin'])
-        ->assertRedirect(route('team.index'))
+        ->post(route('users.invitations.store'), ['email' => 'pat@example.com', 'role' => 'admin'])
+        ->assertRedirect(route('users.index'))
         ->assertSessionHasNoErrors();
 
     $invitation = Invitation::query()->sole();
@@ -50,8 +50,8 @@ test('an admin can invite someone by email', function () {
 
     Notification::assertSentTo(
         new AnonymousNotifiable,
-        TeamInvitation::class,
-        fn (TeamInvitation $notification, array $channels, AnonymousNotifiable $notifiable) => $notifiable->routes['mail'] === 'pat@example.com'
+        UserInvitation::class,
+        fn (UserInvitation $notification, array $channels, AnonymousNotifiable $notifiable) => $notifiable->routes['mail'] === 'pat@example.com'
             && Invitation::findOpen(basename($notification->url))?->is($invitation),
     );
 });
@@ -61,7 +61,7 @@ test('someone who already has an account can’t be invited', function () {
     User::factory()->create(['email' => 'taken@example.com']);
 
     $this->actingAs($admin)
-        ->post(route('team.invitations.store'), ['email' => 'taken@example.com', 'role' => 'member'])
+        ->post(route('users.invitations.store'), ['email' => 'taken@example.com', 'role' => 'member'])
         ->assertSessionHasErrors(['email' => 'That person already has an account.']);
 });
 
@@ -110,23 +110,23 @@ test('an admin can change someone’s role and remove them, but not themselves',
     $member = User::factory()->create();
 
     $this->actingAs($admin)
-        ->patch(route('team.members.update', $member), ['role' => 'admin'])
+        ->patch(route('users.update', $member), ['role' => 'admin'])
         ->assertSessionHasNoErrors();
 
     expect($member->fresh()->role)->toBe(UserRole::Admin);
 
     $this->actingAs($admin)
-        ->patch(route('team.members.update', $admin), ['role' => 'member'])
+        ->patch(route('users.update', $admin), ['role' => 'member'])
         ->assertSessionHasErrors(['member' => 'You can’t change your own role.']);
     $this->actingAs($admin)
-        ->delete(route('team.members.destroy', $admin))
+        ->delete(route('users.destroy', $admin))
         ->assertSessionHasErrors(['member' => 'You can’t remove yourself.']);
 
     expect($admin->fresh()->role)->toBe(UserRole::Admin);
 
     $this->actingAs($admin)
-        ->delete(route('team.members.destroy', $member))
-        ->assertRedirect(route('team.index'));
+        ->delete(route('users.destroy', $member))
+        ->assertRedirect(route('users.index'));
 
     expect($member->fresh())->toBeNull();
 });

@@ -35,7 +35,12 @@
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         <link rel="manifest" href="/manifest.webmanifest">
         <meta name="theme-color" content="#15213a">
+        <meta name="theme-color" content="#0a101b" media="(prefers-color-scheme: dark)">
+        {{-- Opened from the home screen, the app runs full-screen with a solid status bar above it. --}}
+        <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
         @fonts
 

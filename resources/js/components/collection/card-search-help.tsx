@@ -31,7 +31,7 @@ export function CardSearchHelp() {
                     <li>
                         It looks through cards already in the app: every set
                         checklist pasted in under Sets &amp; checklists, and
-                        every card anyone on the team has added before.
+                        every card anyone has added before.
                     </li>
                     <li>
                         Type a player, year, brand, set or card number, in any

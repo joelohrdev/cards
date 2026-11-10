@@ -4,7 +4,7 @@ use App\Http\Controllers\Auth\AcceptInvitationController;
 use App\Http\Controllers\Settings\InvitationController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
-use App\Http\Controllers\Settings\TeamController;
+use App\Http\Controllers\Settings\UserController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
@@ -30,11 +30,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'can:manage-team'])->group(function () {
-    Route::get('settings/team', [TeamController::class, 'index'])->name('team.index');
-    Route::patch('settings/team/members/{member}', [TeamController::class, 'update'])->name('team.members.update');
-    Route::delete('settings/team/members/{member}', [TeamController::class, 'destroy'])->name('team.members.destroy');
-    Route::post('settings/team/invitations', [InvitationController::class, 'store'])->name('team.invitations.store');
-    Route::delete('settings/team/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('team.invitations.destroy');
+    Route::get('settings/users', [UserController::class, 'index'])->name('users.index');
+    Route::patch('settings/users/{member}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('settings/users/{member}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::post('settings/users/invitations', [InvitationController::class, 'store'])->name('users.invitations.store');
+    Route::delete('settings/users/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('users.invitations.destroy');
 });
 
 Route::middleware('guest')->group(function () {

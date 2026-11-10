@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
-import team from '@/routes/team';
+import users from '@/routes/users';
 
 const sections = [
     { title: 'Profile', href: edit() },
@@ -19,7 +19,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { auth } = usePage().props;
     const visibleSections =
         auth.user.role === 'admin'
-            ? [...sections, { title: 'Team', href: team.index() }]
+            ? [...sections, { title: 'Users', href: users.index() }]
             : sections;
 
     return (

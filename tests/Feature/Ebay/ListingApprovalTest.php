@@ -117,14 +117,14 @@ test('promoting the last member a listing waits on to admin publishes it', funct
     $this->actingAs($seller)->post(route('ebay.listings.approval.store', $listing));
 
     $this->actingAs($admin)
-        ->patch(route('team.members.update', $member), ['role' => UserRole::Admin->value])
-        ->assertRedirect(route('team.index'));
+        ->patch(route('users.update', $member), ['role' => UserRole::Admin->value])
+        ->assertRedirect(route('users.index'));
 
     expect($listing->fresh()->status)->toBe(ListingStatus::Active)
         ->and($member->listingApprovals()->exists())->toBeFalse();
 });
 
-test('choosing publish on the listing form sends it for approval when others are on the team', function () {
+test('choosing publish on the listing form sends it for approval when there are other users', function () {
     [$seller, $listing] = sellerWithDraft();
     User::factory()->create();
 
@@ -136,7 +136,7 @@ test('choosing publish on the listing form sends it for approval when others are
     Http::assertNothingSent();
 });
 
-test('with nobody else on the team a listing goes straight to eBay', function () {
+test('with no other users a listing goes straight to eBay', function () {
     [$seller, $listing] = sellerWithDraft();
     fakeEbayPublish();
 

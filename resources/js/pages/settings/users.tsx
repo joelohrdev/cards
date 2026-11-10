@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { shortDate } from '@/lib/format';
-import team from '@/routes/team';
+import users from '@/routes/users';
 import type { Option, UserRole } from '@/types';
 
 type Member = {
@@ -46,14 +46,14 @@ const roleLabels: Record<UserRole, string> = {
     member: 'Member',
 };
 
-export default function Team({ members, invitations, roles }: Props) {
+export default function Users({ members, invitations, roles }: Props) {
     const { errors } = usePage().props as { errors: Record<string, string> };
     const invitationUrl = usePage().flash.invitationUrl as string | undefined;
     const [removing, setRemoving] = useState<Member | null>(null);
 
     function changeRole(member: Member, role: string) {
         router.patch(
-            team.members.update.url(member.id),
+            users.update.url(member.id),
             { role },
             { preserveScroll: true },
         );
@@ -61,9 +61,9 @@ export default function Team({ members, invitations, roles }: Props) {
 
     return (
         <>
-            <Head title="Team" />
+            <Head title="Users" />
 
-            <h1 className="sr-only">Team</h1>
+            <h1 className="sr-only">Users</h1>
 
             <div className="space-y-6">
                 <Heading
@@ -73,7 +73,7 @@ export default function Team({ members, invitations, roles }: Props) {
                 />
 
                 <Form
-                    {...team.invitations.store.form()}
+                    {...users.invitations.store.form()}
                     resetOnSuccess={['email']}
                     options={{ preserveScroll: true }}
                     className="grid gap-3 sm:grid-cols-[1fr_9rem_auto] sm:items-start"
@@ -149,7 +149,7 @@ export default function Team({ members, invitations, roles }: Props) {
                                     size="sm"
                                     onClick={() =>
                                         router.delete(
-                                            team.invitations.destroy.url(
+                                            users.invitations.destroy.url(
                                                 invitation.id,
                                             ),
                                             { preserveScroll: true },
@@ -167,7 +167,7 @@ export default function Team({ members, invitations, roles }: Props) {
             <div className="space-y-3">
                 <Heading
                     variant="small"
-                    title="People"
+                    title="Current users"
                     description="Everyone here sees the whole collection. Selling a card on eBay needs approval from the other members; admins aren’t asked."
                 />
                 <InputError message={errors.member} />
@@ -256,7 +256,7 @@ export default function Team({ members, invitations, roles }: Props) {
                             onClick={() => {
                                 if (removing) {
                                     router.delete(
-                                        team.members.destroy.url(removing.id),
+                                        users.destroy.url(removing.id),
                                         {
                                             preserveScroll: true,
                                             onFinish: () => setRemoving(null),
@@ -304,6 +304,6 @@ function InvitationLink({ url }: { url: string }) {
     );
 }
 
-Team.layout = {
-    breadcrumbs: [{ title: 'Team', href: team.index() }],
+Users.layout = {
+    breadcrumbs: [{ title: 'Users', href: users.index() }],
 };

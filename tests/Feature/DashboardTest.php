@@ -41,7 +41,7 @@ test('an empty collection shows admins the setup steps, ticking off what exists'
         ->get(route('dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('setup', [
-            ['key' => 'team', 'done' => false],
+            ['key' => 'users', 'done' => false],
             ['key' => 'storage', 'done' => true],
             ['key' => 'tags', 'done' => false],
             ['key' => 'sets', 'done' => false],
@@ -50,7 +50,7 @@ test('an empty collection shows admins the setup steps, ticking off what exists'
         ]));
 });
 
-test('members are not asked to invite the team', function () {
+test('members are not asked to invite users', function () {
     $member = User::factory()->create();
 
     $this->actingAs($member)

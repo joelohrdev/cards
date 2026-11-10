@@ -16,9 +16,12 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Organize\StorageLocationController;
 use App\Http\Controllers\Organize\TagController;
 use App\Http\Controllers\Organize\WantListController;
+use App\Http\Controllers\WebManifestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => auth()->check() ? to_route('dashboard') : to_route('login'))->name('home');
+
+Route::get('manifest.webmanifest', WebManifestController::class)->name('manifest');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');

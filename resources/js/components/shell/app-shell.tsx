@@ -29,7 +29,7 @@ import { cn, toUrl } from '@/lib/utils';
 import { dashboard, help, logout } from '@/routes';
 import collection from '@/routes/collection';
 import { edit as editProfile } from '@/routes/profile';
-import team from '@/routes/team';
+import users from '@/routes/users';
 
 /**
  * The href of the most specific nav item matching the current page.
@@ -197,9 +197,9 @@ function UserMenu() {
                 </DropdownMenuItem>
                 {auth.user.role === 'admin' && (
                     <DropdownMenuItem asChild className="pointer-coarse:py-2.5">
-                        <Link href={team.index()}>
+                        <Link href={users.index()}>
                             <Users />
-                            Team
+                            Users
                         </Link>
                     </DropdownMenuItem>
                 )}

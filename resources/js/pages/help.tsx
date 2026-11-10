@@ -95,6 +95,34 @@ const sections: Section[] = [
         ),
     },
     {
+        id: 'home-screen',
+        title: 'Putting the app on your iPad',
+        body: (
+            <>
+                <p>
+                    Added to the home screen, the app opens full-screen like any
+                    other app, without Safari’s address bar.
+                </p>
+                <Steps>
+                    <li>Open the site in Safari and sign in.</li>
+                    <li>
+                        Tap the Share button, then <em>Add to Home Screen</em>,
+                        then <em>Add</em>.
+                    </li>
+                    <li>
+                        Open it from the new icon. The home-screen app keeps its
+                        own sign-in, so you sign in once more the first time;
+                        tick <em>Remember me</em> to stay signed in.
+                    </li>
+                </Steps>
+                <p>
+                    It needs a connection to load your cards. Without one, it
+                    shows an offline screen with a <em>Try again</em> button.
+                </p>
+            </>
+        ),
+    },
+    {
         id: 'adding',
         title: 'Adding cards',
         body: (
@@ -443,7 +471,7 @@ const sections: Section[] = [
             <p>
                 Change your name, email and password from the settings menu. New
                 accounts can’t be created from the sign-in page: an admin
-                invites people from Settings → Team, and the emailed link lets
+                invites people from Settings → Users, and the emailed link lets
                 them set a password. Admins can also make someone an admin or
                 remove them; the cards they added stay.
             </p>

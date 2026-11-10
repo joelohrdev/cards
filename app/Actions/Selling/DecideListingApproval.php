@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Record one teammate's approval or rejection. A single rejection sends the listing back to
+ * Record one user's approval or rejection. A single rejection sends the listing back to
  * draft; the last approval publishes it.
  */
 class DecideListingApproval

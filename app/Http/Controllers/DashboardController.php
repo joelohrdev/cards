@@ -151,14 +151,14 @@ class DashboardController extends Controller
 
     /**
      * What to set up before the first card goes in, and which steps are already done.
-     * Inviting the team only applies to admins, since only they can send invitations.
+     * Inviting users only applies to admins, since only they can send invitations.
      *
      * @return list<array{key: string, done: bool}>
      */
     private function setupSteps(User $user): array
     {
         $steps = [
-            'team' => User::query()->count() > 1 || Invitation::query()->open()->exists(),
+            'users' => User::query()->count() > 1 || Invitation::query()->open()->exists(),
             'storage' => StorageLocation::query()->exists(),
             'tags' => Tag::query()->exists(),
             'sets' => CardSet::query()->exists(),
@@ -167,7 +167,7 @@ class DashboardController extends Controller
         ];
 
         if (! $user->isAdmin()) {
-            unset($steps['team']);
+            unset($steps['users']);
         }
 
         return array_map(

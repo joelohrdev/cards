@@ -49,7 +49,7 @@ class ListingApprovalController extends Controller
     }
 
     /**
-     * Ask the rest of the team to approve a draft.
+     * Ask the other users to approve a draft.
      */
     public function store(Request $request, EbayListing $listing, RequestListingApproval $requestApproval): RedirectResponse
     {

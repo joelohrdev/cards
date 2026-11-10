@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * One teammate's sign-off on putting a listing on eBay.
+ * One user's sign-off on putting a listing on eBay.
  *
  * @property int $id
  * @property int $ebay_listing_id

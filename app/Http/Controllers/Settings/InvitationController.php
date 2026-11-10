@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
-use App\Actions\Team\InviteMember;
+use App\Actions\Users\InviteMember;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Invitation;
@@ -30,7 +30,7 @@ class InvitationController extends Controller
         Inertia::flash('invitationUrl', $url);
         Inertia::flash('toast', ['type' => 'success', 'message' => "Invitation sent to {$validated['email']}."]);
 
-        return to_route('team.index');
+        return to_route('users.index');
     }
 
     /**
@@ -42,6 +42,6 @@ class InvitationController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Invitation cancelled.']);
 
-        return to_route('team.index');
+        return to_route('users.index');
     }
 }

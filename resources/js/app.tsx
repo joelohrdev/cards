@@ -39,3 +39,11 @@ void createInertiaApp({
 
 // This will set light / dark mode on load...
 initializeTheme();
+
+// Installed (home screen) use: cache built assets and show an offline page when there's no connection.
+// Production only, so the dev server is never served stale files.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        void navigator.serviceWorker.register('/sw.js');
+    });
+}

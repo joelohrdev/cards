@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Actions\Team;
+namespace App\Actions\Users;
 
 use App\Enums\UserRole;
 use App\Models\Invitation;
 use App\Models\User;
-use App\Notifications\TeamInvitation;
+use App\Notifications\UserInvitation;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
@@ -34,7 +34,7 @@ class InviteMember
 
         $url = route('invitations.show', $token);
 
-        Notification::route('mail', $email)->notify(new TeamInvitation($invitation, $url));
+        Notification::route('mail', $email)->notify(new UserInvitation($invitation, $url));
 
         return $url;
     }
