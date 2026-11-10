@@ -20,6 +20,7 @@ use App\Support\CollectionItemSearch;
 use App\Support\FormOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -46,9 +47,10 @@ class CollectionItemController extends Controller
         $search = new CollectionItemSearch($query, $filters);
         $builder = $search->builder();
 
-        $totals = (clone $builder)->toBase()->reorder()->selectRaw(
+        // select() replaces the search's collection_items.* columns, which MySQL rejects alongside aggregates.
+        $totals = (clone $builder)->toBase()->reorder()->select(DB::raw(
             'count(*) as item_count, coalesce(sum(collection_items.estimated_value), 0) as total_value, coalesce(sum(collection_items.purchase_price), 0) as total_cost'
-        )->first();
+        ))->first();
 
         $items = $builder
             ->with(CollectionItemResource::LIST_RELATIONS)

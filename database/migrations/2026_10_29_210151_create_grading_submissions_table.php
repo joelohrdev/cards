@@ -35,7 +35,8 @@ return new class extends Migration
             $table->string('resulting_cert_number')->nullable();
             $table->timestamps();
 
-            $table->unique(['grading_submission_id', 'collection_item_id']);
+            // Named explicitly: the generated name is longer than MySQL's 64-character limit.
+            $table->unique(['grading_submission_id', 'collection_item_id'], 'grading_items_submission_item_unique');
         });
     }
 

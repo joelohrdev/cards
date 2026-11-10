@@ -39,6 +39,13 @@ return new class extends Migration
         $this->mergeDuplicateWants();
         $this->mergeValueSnapshots();
 
+        // Foreign keys come off first: MySQL won't drop a unique index that a foreign key relies on.
+        foreach (self::ADDED_BY_TABLES as $tableName) {
+            Schema::table($tableName, function (Blueprint $table) {
+                $table->dropForeign(['user_id']);
+            });
+        }
+
         Schema::table('tags', function (Blueprint $table) {
             $table->dropUnique(['user_id', 'name']);
         });
@@ -48,10 +55,6 @@ return new class extends Migration
         });
 
         foreach (self::ADDED_BY_TABLES as $tableName) {
-            Schema::table($tableName, function (Blueprint $table) {
-                $table->dropForeign(['user_id']);
-            });
-
             Schema::table($tableName, function (Blueprint $table) {
                 $table->foreignId('user_id')->nullable()->change();
                 $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
@@ -67,8 +70,11 @@ return new class extends Migration
         });
 
         Schema::table('value_snapshots', function (Blueprint $table) {
-            $table->dropUnique(['user_id', 'captured_on']);
             $table->dropForeign(['user_id']);
+        });
+
+        Schema::table('value_snapshots', function (Blueprint $table) {
+            $table->dropUnique(['user_id', 'captured_on']);
         });
 
         Schema::table('value_snapshots', function (Blueprint $table) {

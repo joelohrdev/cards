@@ -161,7 +161,7 @@ test('saving the mapping tags the import and queues it', function () {
 
     expect($import->status)->toBe(ImportStatus::Processing)
         ->and($import->mapping)->toMatchArray(['year' => 0, 'set' => 1, 'number' => 2, 'name' => 3, 'sport' => null])
-        ->and($import->defaults)->toBe(['sport' => 'hockey', 'tags' => ['Binder A'], 'storage_location_id' => $location->id])
+        ->and($import->defaults)->toEqual(['sport' => 'hockey', 'tags' => ['Binder A'], 'storage_location_id' => $location->id])
         ->and($import->tag->name)->toBe('Import '.now()->toDateString());
 
     Queue::assertPushed(ProcessImport::class, fn (ProcessImport $job) => $job->import->is($import));

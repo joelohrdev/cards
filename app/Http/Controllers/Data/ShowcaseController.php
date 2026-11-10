@@ -11,6 +11,7 @@ use App\Models\ShareLink;
 use Illuminate\Contracts\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -46,7 +47,7 @@ class ShowcaseController extends Controller
         $search = Str::limit(trim((string) $request->string('q')), 100, '');
 
         $query = $this->baseQuery($link);
-        $totals = (clone $query)->toBase()->selectRaw('count(*) as item_count, coalesce(sum(collection_items.estimated_value), 0) as total_value')->first();
+        $totals = (clone $query)->toBase()->reorder()->select(DB::raw('count(*) as item_count, coalesce(sum(collection_items.estimated_value), 0) as total_value'))->first();
 
         $this->applySearch($query, $search);
         $this->applySort($query, $sort);
