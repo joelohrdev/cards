@@ -4,6 +4,7 @@ use App\Enums\ApprovalDecision;
 use App\Enums\Grader;
 use App\Enums\ItemStatus;
 use App\Enums\ListingStatus;
+use App\Enums\UserRole;
 use App\Models\CollectionItem;
 use App\Models\EbayAccount;
 use App\Models\EbayListing;
@@ -74,6 +75,53 @@ test('sending a draft for approval asks everyone else and holds it back from eBa
     Notification::assertSentTo($teammates, ListingApprovalRequested::class);
     Notification::assertNotSentTo($seller, ListingApprovalRequested::class);
     Http::assertNothingSent();
+});
+
+test('admins are never asked to approve a listing', function () {
+    [$seller, $listing] = sellerWithDraft();
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->create();
+
+    $this->actingAs($seller)->post(route('ebay.listings.approval.store', $listing))->assertSessionHasNoErrors();
+
+    expect($listing->approvals()->pluck('user_id')->all())->toBe([$member->id]);
+    Notification::assertNotSentTo($admin, ListingApprovalRequested::class);
+});
+
+test('an admin’s own listing still needs every member to approve', function () {
+    [$seller, $listing] = sellerWithDraft();
+    $seller->forceFill(['role' => UserRole::Admin])->save();
+    $members = User::factory()->count(2)->create();
+
+    $this->actingAs($seller)->post(route('ebay.listings.approval.store', $listing))->assertSessionHasNoErrors();
+
+    expect($listing->fresh()->status)->toBe(ListingStatus::PendingApproval)
+        ->and($listing->approvals()->pluck('user_id')->sort()->values()->all())->toBe($members->pluck('id')->all());
+});
+
+test('a member’s listing goes straight to eBay when the only other person is an admin', function () {
+    [$seller, $listing] = sellerWithDraft();
+    User::factory()->admin()->create();
+    fakeEbayPublish();
+
+    $this->actingAs($seller)->post(route('ebay.listings.approval.store', $listing))->assertSessionHasNoErrors();
+
+    expect($listing->fresh()->status)->toBe(ListingStatus::Active);
+});
+
+test('promoting the last member a listing waits on to admin publishes it', function () {
+    [$seller, $listing] = sellerWithDraft();
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->create();
+    fakeEbayPublish();
+    $this->actingAs($seller)->post(route('ebay.listings.approval.store', $listing));
+
+    $this->actingAs($admin)
+        ->patch(route('team.members.update', $member), ['role' => UserRole::Admin->value])
+        ->assertRedirect(route('team.index'));
+
+    expect($listing->fresh()->status)->toBe(ListingStatus::Active)
+        ->and($member->listingApprovals()->exists())->toBeFalse();
 });
 
 test('choosing publish on the listing form sends it for approval when others are on the team', function () {

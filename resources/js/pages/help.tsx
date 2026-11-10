@@ -376,13 +376,13 @@ const sections: Section[] = [
                         listing.
                     </li>
                     <li>
-                        Everyone else on the team gets an email and sees it
-                        under <Go href={ebay.approvals.index()}>Approvals</Go>.
-                        Once they’ve all approved, it goes live on eBay. If
-                        anyone declines, it goes back to a draft with their
-                        note. To change a listing that’s waiting, withdraw the
-                        request first; changing an approved draft needs approval
-                        again.
+                        The other members get an email and see it under{' '}
+                        <Go href={ebay.approvals.index()}>Approvals</Go>. Admins
+                        aren’t asked. Once every member asked has approved, it
+                        goes live on eBay. If anyone declines, it goes back to a
+                        draft with their note. To change a listing that’s
+                        waiting, withdraw the request first; changing an
+                        approved draft needs approval again.
                     </li>
                 </Steps>
                 <p>

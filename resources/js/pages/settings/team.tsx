@@ -168,7 +168,7 @@ export default function Team({ members, invitations, roles }: Props) {
                 <Heading
                     variant="small"
                     title="People"
-                    description="Everyone here sees the whole collection. Selling a card on eBay needs everyone else’s approval."
+                    description="Everyone here sees the whole collection. Selling a card on eBay needs approval from the other members; admins aren’t asked."
                 />
                 <InputError message={errors.member} />
                 <ul className="divide-y rounded-lg border">

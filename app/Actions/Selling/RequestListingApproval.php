@@ -4,6 +4,7 @@ namespace App\Actions\Selling;
 
 use App\Enums\ApprovalDecision;
 use App\Enums\ListingStatus;
+use App\Enums\UserRole;
 use App\Models\EbayListing;
 use App\Models\User;
 use App\Notifications\ListingApprovalRequested;
@@ -12,8 +13,8 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Ask everyone else on the team to approve putting a draft on eBay. With nobody else to ask,
- * the listing is approved and published straight away.
+ * Ask the rest of the team to approve putting a draft on eBay. Admins are never asked, and
+ * nobody approves their own listing. With nobody left to ask, it is published straight away.
  */
 class RequestListingApproval
 {
@@ -25,7 +26,10 @@ class RequestListingApproval
             throw ValidationException::withMessages(['ebay' => 'Only drafts can be sent for approval.']);
         }
 
-        $approvers = User::query()->whereKeyNot($requester->id)->get();
+        $approvers = User::query()
+            ->whereKeyNot($requester->id)
+            ->where('role', '!=', UserRole::Admin->value)
+            ->get();
 
         DB::transaction(function () use ($requester, $listing, $approvers): void {
             $listing->approvals()->delete();

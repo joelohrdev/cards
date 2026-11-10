@@ -33,8 +33,8 @@ export default function EbayApprovals({
                 title="Approvals"
                 description={
                     waitingOnYou.length > 0
-                        ? `${waitingOnYou.length} ${waitingOnYou.length === 1 ? 'listing is' : 'listings are'} waiting on you. A card goes to eBay once everyone else approves it.`
-                        : 'A card goes to eBay once everyone other than the person listing it approves.'
+                        ? `${waitingOnYou.length} ${waitingOnYou.length === 1 ? 'listing is' : 'listings are'} waiting on you. A card goes to eBay once every member asked approves it.`
+                        : 'A card goes to eBay once the other members approve it. Admins aren’t asked.'
                 }
             />
 

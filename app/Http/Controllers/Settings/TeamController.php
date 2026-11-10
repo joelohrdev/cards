@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Actions\Selling\PublishApprovedListings;
+use App\Enums\ApprovalDecision;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Invitation;
@@ -42,13 +44,19 @@ class TeamController extends Controller
     /**
      * Make a member an admin, or an admin a member.
      */
-    public function update(Request $request, User $member): RedirectResponse
+    public function update(Request $request, User $member, PublishApprovedListings $publishApprovedListings): RedirectResponse
     {
         $validated = $request->validate(['role' => ['required', Rule::enum(UserRole::class)]]);
 
         $this->guardAgainstSelf($request, $member, 'You can’t change your own role.');
 
         $member->forceFill(['role' => $validated['role']])->save();
+
+        // Admins never approve listings, so a new admin's pending sign-offs no longer count.
+        if ($member->isAdmin()) {
+            $member->listingApprovals()->where('decision', ApprovalDecision::Pending->value)->delete();
+            $publishApprovedListings->handle();
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$member->name} is now ".($member->isAdmin() ? 'an admin' : 'a member').'.']);
 

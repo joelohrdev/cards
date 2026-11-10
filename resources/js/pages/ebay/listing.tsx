@@ -161,8 +161,8 @@ export default function EbayListingPage({
                     isLive && listing?.published_at
                         ? `Live since ${shortDate(listing.published_at)}. Changes you save here update the listing on eBay.`
                         : isPending
-                          ? 'It goes to eBay as soon as everyone else approves. To change it, withdraw the request first.'
-                          : 'Check the title, description and price, then send it for approval. It goes to eBay once everyone else approves. Item specifics and condition come from the card’s details.'
+                          ? 'It goes to eBay as soon as the other members approve. To change it, withdraw the request first.'
+                          : 'Check the title, description and price, then send it for approval. It goes to eBay once the other members approve. Item specifics and condition come from the card’s details.'
                 }
                 actions={
                     <>
