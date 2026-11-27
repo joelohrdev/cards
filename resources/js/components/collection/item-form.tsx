@@ -1,47 +1,46 @@
-import { useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useForm } from "@inertiajs/react";
+import { useState } from "react";
 import {
     CardPicker,
     emptyCardDraft,
-} from '@/components/collection/card-picker';
+} from "@/components/collection/card-picker";
 import type {
     NewCardDraft,
     NewSetDraft,
     PickedCard,
     PickedSet,
-} from '@/components/collection/card-picker';
-import { CardSearchHelp } from '@/components/collection/card-search-help';
-import { PhotoSlot } from '@/components/collection/photo-slot';
-import { TagInput } from '@/components/collection/tag-input';
-import { CertLookup } from '@/components/grading/cert-lookup';
-import { IdentifyFromPhoto } from '@/components/identify/identify-from-photo';
+} from "@/components/collection/card-picker";
+import { CardSearchHelp } from "@/components/collection/card-search-help";
+import { PhotoSlot } from "@/components/collection/photo-slot";
+import { TagInput } from "@/components/collection/tag-input";
+import { CertLookup } from "@/components/grading/cert-lookup";
+import { IdentifyFromPhoto } from "@/components/identify/identify-from-photo";
 import {
     Field,
     MoneyInput,
     NativeSelect,
     Textarea,
-} from '@/components/kit/field';
-import { Panel } from '@/components/kit/panel';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { dollarsInput } from '@/lib/format';
-import { cn } from '@/lib/utils';
-import collection from '@/routes/collection';
+} from "@/components/kit/field";
+import { Panel } from "@/components/kit/panel";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { dollarsInput } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import collection from "@/routes/collection";
 import type {
     CertLookupResult,
     CollectionItem,
     FormOptions,
     ParallelSummary,
     PhotoSuggestion,
-} from '@/types';
+} from "@/types";
 
 type ItemFormData = {
     card_id: number | null;
     card_set_id: number | null;
     new_set: NewSetDraft | null;
     card:
-        | (Omit<NewCardDraft, 'print_run'> & { print_run: string | null })
-        | null;
+        (Omit<NewCardDraft, "print_run"> & { print_run: string | null }) | null;
     parallel_id: string;
     parallel_name: string;
     parallel_print_run: string;
@@ -67,12 +66,6 @@ type ItemFormData = {
 };
 
 /**
- * "Use a photo" (identify a card from a picture) is hidden for now. Flip this to
- * bring the button back on the Add a card page; the help page mentions it too.
- */
-const showPhotoIdentification = false;
-
-/**
  * Shared add/edit form for a card in the collection.
  */
 export function ItemForm({
@@ -87,7 +80,7 @@ export function ItemForm({
     prefillCard?: PickedCard | null;
 }) {
     const editing = item !== undefined;
-    const [mode, setMode] = useState<'existing' | 'new'>('existing');
+    const [mode, setMode] = useState<"existing" | "new">("existing");
     const [picked, setPicked] = useState<PickedCard | null>(
         item ? { ...item.card, parallels: initialParallels } : prefillCard,
     );
@@ -101,25 +94,25 @@ export function ItemForm({
         card_set_id: null,
         new_set: null,
         card: null,
-        parallel_id: item?.parallel ? String(item.parallel.id) : '',
-        parallel_name: '',
-        parallel_print_run: '',
-        serial_number: item?.serial_number ? String(item.serial_number) : '',
+        parallel_id: item?.parallel ? String(item.parallel.id) : "",
+        parallel_name: "",
+        parallel_print_run: "",
+        serial_number: item?.serial_number ? String(item.serial_number) : "",
         is_graded: item?.is_graded ?? false,
-        grader: item?.grader ?? 'PSA',
-        grade: item?.grade ?? '',
-        cert_number: item?.cert_number ?? '',
-        raw_condition: item?.raw_condition ?? 'nm',
-        status: item?.status ?? 'owned',
+        grader: item?.grader ?? "PSA",
+        grade: item?.grade ?? "",
+        cert_number: item?.cert_number ?? "",
+        raw_condition: item?.raw_condition ?? "nm",
+        status: item?.status ?? "owned",
         purchase_price: dollarsInput(item?.purchase_price),
-        purchase_date: item?.purchase_date ?? '',
-        purchase_source: item?.purchase_source ?? '',
+        purchase_date: item?.purchase_date ?? "",
+        purchase_source: item?.purchase_source ?? "",
         estimated_value: dollarsInput(item?.estimated_value),
-        storage_location_id: item?.location ? String(item.location.id) : '',
-        storage_position: item?.storage_position ?? '',
-        notes: item?.notes ?? '',
+        storage_location_id: item?.location ? String(item.location.id) : "",
+        storage_position: item?.storage_position ?? "",
+        notes: item?.notes ?? "",
         tags: item?.tags?.map((tag) => tag.name) ?? [],
-        quantity: '1',
+        quantity: "1",
         add_another: false,
         photo: null,
         back_photo: null,
@@ -128,7 +121,7 @@ export function ItemForm({
     const { data, setData, errors, processing } = form;
     const errorBag = errors as Record<string, string | undefined>;
     const parallels: ParallelSummary[] =
-        mode === 'existing'
+        mode === "existing"
             ? (picked?.parallels ?? [])
             : (pickedSet?.parallels ?? []);
     const selectedParallel = parallels.find(
@@ -137,14 +130,18 @@ export function ItemForm({
     const printRun = newParallel
         ? Number(data.parallel_print_run) || null
         : (selectedParallel?.print_run ??
-          (mode === 'existing'
+          (mode === "existing"
               ? picked?.print_run
               : Number(cardDraft.print_run) || null));
 
     /**
-     * Fill the form from a card identified in a photo; the photo becomes the card's front image.
+     * Fill the form from a card identified in photos; they become the card's front and back images.
      */
-    function applySuggestion(suggestion: PhotoSuggestion, photo: File) {
+    function applySuggestion(
+        suggestion: PhotoSuggestion,
+        photo: File,
+        backPhoto: File | null,
+    ) {
         const match = suggestion.matches[0] ?? null;
         const parallelsForMatch = match?.parallels ?? [];
         const knownParallel = suggestion.parallel
@@ -156,29 +153,29 @@ export function ItemForm({
             : undefined;
 
         if (match) {
-            setMode('existing');
+            setMode("existing");
             setPicked(match);
         } else {
-            setMode('new');
+            setMode("new");
             setPickedSet(null);
             setSetDraft({
                 sport:
-                    suggestion.sport ?? options.sports[0]?.value ?? 'baseball',
-                year: suggestion.year ? String(suggestion.year) : '',
-                manufacturer: suggestion.manufacturer ?? '',
-                name: suggestion.set_name ?? '',
+                    suggestion.sport ?? options.sports[0]?.value ?? "baseball",
+                year: suggestion.year ? String(suggestion.year) : "",
+                manufacturer: suggestion.manufacturer ?? "",
+                name: suggestion.set_name ?? "",
             });
             setCardDraft({
                 ...emptyCardDraft,
-                number: suggestion.number ?? '',
-                name: suggestion.name ?? '',
-                team: suggestion.team ?? '',
+                number: suggestion.number ?? "",
+                name: suggestion.name ?? "",
+                team: suggestion.team ?? "",
                 is_rookie: suggestion.is_rookie,
                 is_autograph: suggestion.is_autograph,
                 is_memorabilia: suggestion.is_memorabilia,
                 print_run: suggestion.print_run
                     ? String(suggestion.print_run)
-                    : '',
+                    : "",
             });
         }
 
@@ -186,19 +183,20 @@ export function ItemForm({
         form.setData((current) => ({
             ...current,
             photo,
-            parallel_id: knownParallel ? String(knownParallel.id) : '',
-            parallel_name: knownParallel ? '' : (suggestion.parallel ?? ''),
+            back_photo: backPhoto ?? current.back_photo,
+            parallel_id: knownParallel ? String(knownParallel.id) : "",
+            parallel_name: knownParallel ? "" : (suggestion.parallel ?? ""),
             parallel_print_run:
                 suggestion.print_run && !knownParallel
                     ? String(suggestion.print_run)
-                    : '',
+                    : "",
             serial_number: suggestion.serial_number
                 ? String(suggestion.serial_number)
                 : current.serial_number,
             is_graded: suggestion.is_graded,
             grader: suggestion.grader ?? current.grader,
-            grade: suggestion.grade ?? '',
-            cert_number: suggestion.cert_number ?? '',
+            grade: suggestion.grade ?? "",
+            cert_number: suggestion.cert_number ?? "",
         }));
     }
 
@@ -212,23 +210,23 @@ export function ItemForm({
         }));
 
         if (
-            mode === 'new' &&
-            cardDraft.number === '' &&
-            cardDraft.name === ''
+            mode === "new" &&
+            cardDraft.number === "" &&
+            cardDraft.name === ""
         ) {
             setCardDraft({
                 ...cardDraft,
-                number: result.card_number ?? '',
-                name: result.player ?? '',
+                number: result.card_number ?? "",
+                name: result.player ?? "",
             });
 
             if (!pickedSet && setDraft === null) {
                 setSetDraft({
                     sport:
-                        result.sport ?? options.sports[0]?.value ?? 'baseball',
-                    year: result.year ? String(result.year) : '',
-                    manufacturer: result.brand ?? '',
-                    name: result.set_name ?? '',
+                        result.sport ?? options.sports[0]?.value ?? "baseball",
+                    year: result.year ? String(result.year) : "",
+                    manufacturer: result.brand ?? "",
+                    name: result.set_name ?? "",
                 });
             }
         }
@@ -239,15 +237,15 @@ export function ItemForm({
 
         form.transform((current) => ({
             ...current,
-            card_id: mode === 'existing' ? (picked?.id ?? null) : null,
-            card_set_id: mode === 'new' ? (pickedSet?.id ?? null) : null,
-            new_set: mode === 'new' && !pickedSet ? setDraft : null,
+            card_id: mode === "existing" ? (picked?.id ?? null) : null,
+            card_set_id: mode === "new" ? (pickedSet?.id ?? null) : null,
+            new_set: mode === "new" && !pickedSet ? setDraft : null,
             card:
-                mode === 'new'
+                mode === "new"
                     ? { ...cardDraft, print_run: cardDraft.print_run || null }
                     : null,
-            parallel_id: newParallel ? '' : current.parallel_id,
-            parallel_name: newParallel ? current.parallel_name : '',
+            parallel_id: newParallel ? "" : current.parallel_id,
+            parallel_name: newParallel ? current.parallel_name : "",
             add_another: addAnother,
         }));
 
@@ -260,10 +258,10 @@ export function ItemForm({
                     if (addAnother) {
                         form.setData((current) => ({
                             ...current,
-                            serial_number: '',
-                            cert_number: '',
-                            grade: '',
-                            notes: '',
+                            serial_number: "",
+                            cert_number: "",
+                            grade: "",
+                            notes: "",
                             photo: null,
                             back_photo: null,
                         }));
@@ -309,16 +307,16 @@ export function ItemForm({
                         <>
                             {data.photo && (
                                 <p className="mb-3 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
-                                    Filled in from your photo. Check the
-                                    details; the photo will be saved as the
-                                    front image.
+                                    Filled in from your photos. Check the
+                                    details; the photos will be saved with the
+                                    card.
                                 </p>
                             )}
                             <CardPicker
                                 picked={picked}
                                 onPick={(card) => {
                                     setPicked(card);
-                                    setData('parallel_id', '');
+                                    setData("parallel_id", "");
                                 }}
                                 mode={mode}
                                 onModeChange={setMode}
@@ -327,16 +325,14 @@ export function ItemForm({
                                 pickedSet={pickedSet}
                                 onPickSet={(set) => {
                                     setPickedSet(set);
-                                    setData('parallel_id', '');
+                                    setData("parallel_id", "");
                                 }}
                                 setDraft={setDraft}
                                 onSetDraftChange={setSetDraft}
                                 scanAction={
-                                    showPhotoIdentification ? (
-                                        <IdentifyFromPhoto
-                                            onResult={applySuggestion}
-                                        />
-                                    ) : undefined
+                                    <IdentifyFromPhoto
+                                        onResult={applySuggestion}
+                                    />
                                 }
                                 sports={options.sports}
                                 errors={errorBag}
@@ -351,13 +347,13 @@ export function ItemForm({
                             <PhotoSlot
                                 label="Front"
                                 file={data.photo}
-                                onChange={(file) => setData('photo', file)}
+                                onChange={(file) => setData("photo", file)}
                                 error={errors.photo}
                             />
                             <PhotoSlot
                                 label="Back"
                                 file={data.back_photo}
-                                onChange={(file) => setData('back_photo', file)}
+                                onChange={(file) => setData("back_photo", file)}
                                 error={errors.back_photo}
                             />
                         </div>
@@ -381,7 +377,7 @@ export function ItemForm({
                                         value={data.parallel_name}
                                         onChange={(event) =>
                                             setData(
-                                                'parallel_name',
+                                                "parallel_name",
                                                 event.target.value,
                                             )
                                         }
@@ -392,7 +388,7 @@ export function ItemForm({
                                         value={data.parallel_print_run}
                                         onChange={(event) =>
                                             setData(
-                                                'parallel_print_run',
+                                                "parallel_print_run",
                                                 event.target.value,
                                             )
                                         }
@@ -406,7 +402,7 @@ export function ItemForm({
                                     value={data.parallel_id}
                                     onChange={(event) =>
                                         setData(
-                                            'parallel_id',
+                                            "parallel_id",
                                             event.target.value,
                                         )
                                     }
@@ -420,7 +416,7 @@ export function ItemForm({
                                             {parallel.name}
                                             {parallel.print_run
                                                 ? ` /${parallel.print_run}`
-                                                : ''}
+                                                : ""}
                                         </option>
                                     ))}
                                 </NativeSelect>
@@ -431,8 +427,8 @@ export function ItemForm({
                                 onClick={() => setNewParallel(!newParallel)}
                             >
                                 {newParallel
-                                    ? 'Choose an existing parallel'
-                                    : 'Add a parallel that isn’t listed'}
+                                    ? "Choose an existing parallel"
+                                    : "Add a parallel that isn’t listed"}
                             </button>
                         </Field>
                         <Field
@@ -441,14 +437,14 @@ export function ItemForm({
                             hint={
                                 printRun
                                     ? `Out of ${printRun}`
-                                    : 'For numbered cards'
+                                    : "For numbered cards"
                             }
                         >
                             <Input
                                 inputMode="numeric"
                                 value={data.serial_number}
                                 onChange={(event) =>
-                                    setData('serial_number', event.target.value)
+                                    setData("serial_number", event.target.value)
                                 }
                                 placeholder="23"
                             />
@@ -462,14 +458,14 @@ export function ItemForm({
                             <button
                                 key={String(graded)}
                                 type="button"
-                                onClick={() => setData('is_graded', graded)}
+                                onClick={() => setData("is_graded", graded)}
                                 className={cn(
-                                    'rounded-md px-4 py-1.5 font-medium text-muted-foreground',
+                                    "rounded-md px-4 py-1.5 font-medium text-muted-foreground",
                                     data.is_graded === graded &&
-                                        'bg-card text-foreground shadow-xs',
+                                        "bg-card text-foreground shadow-xs",
                                 )}
                             >
-                                {graded ? 'Graded' : 'Raw'}
+                                {graded ? "Graded" : "Raw"}
                             </button>
                         ))}
                     </div>
@@ -480,7 +476,7 @@ export function ItemForm({
                                 <NativeSelect
                                     value={data.grader}
                                     onChange={(event) =>
-                                        setData('grader', event.target.value)
+                                        setData("grader", event.target.value)
                                     }
                                 >
                                     {options.graders.map((grader) => (
@@ -497,7 +493,7 @@ export function ItemForm({
                                 <Input
                                     value={data.grade}
                                     onChange={(event) =>
-                                        setData('grade', event.target.value)
+                                        setData("grade", event.target.value)
                                     }
                                     placeholder="10, 9.5, Authentic"
                                 />
@@ -511,7 +507,7 @@ export function ItemForm({
                                         value={data.cert_number}
                                         onChange={(event) =>
                                             setData(
-                                                'cert_number',
+                                                "cert_number",
                                                 event.target.value,
                                             )
                                         }
@@ -533,15 +529,15 @@ export function ItemForm({
                                     type="button"
                                     onClick={() =>
                                         setData(
-                                            'raw_condition',
+                                            "raw_condition",
                                             condition.value,
                                         )
                                     }
                                     className={cn(
-                                        'rounded-full border px-3 py-1 text-sm',
+                                        "rounded-full border px-3 py-1 text-sm",
                                         data.raw_condition === condition.value
-                                            ? 'border-primary bg-primary text-primary-foreground'
-                                            : 'bg-card hover:bg-accent',
+                                            ? "border-primary bg-primary text-primary-foreground"
+                                            : "bg-card hover:bg-accent",
                                     )}
                                 >
                                     {condition.label}
@@ -561,7 +557,7 @@ export function ItemForm({
                             <TagInput
                                 id="item-tags"
                                 value={data.tags}
-                                onChange={(tags) => setData('tags', tags)}
+                                onChange={(tags) => setData("tags", tags)}
                                 suggestions={options.tags}
                             />
                         </Field>
@@ -569,7 +565,7 @@ export function ItemForm({
                             <Textarea
                                 value={data.notes}
                                 onChange={(event) =>
-                                    setData('notes', event.target.value)
+                                    setData("notes", event.target.value)
                                 }
                                 placeholder="Centering, surface wear, where it came from…"
                             />
@@ -587,7 +583,7 @@ export function ItemForm({
                                     value={data.purchase_price}
                                     onChange={(event) =>
                                         setData(
-                                            'purchase_price',
+                                            "purchase_price",
                                             event.target.value,
                                         )
                                     }
@@ -602,7 +598,7 @@ export function ItemForm({
                                     value={data.estimated_value}
                                     onChange={(event) =>
                                         setData(
-                                            'estimated_value',
+                                            "estimated_value",
                                             event.target.value,
                                         )
                                     }
@@ -620,7 +616,7 @@ export function ItemForm({
                                     value={data.purchase_date}
                                     onChange={(event) =>
                                         setData(
-                                            'purchase_date',
+                                            "purchase_date",
                                             event.target.value,
                                         )
                                     }
@@ -634,7 +630,7 @@ export function ItemForm({
                                     value={data.purchase_source}
                                     onChange={(event) =>
                                         setData(
-                                            'purchase_source',
+                                            "purchase_source",
                                             event.target.value,
                                         )
                                     }
@@ -652,7 +648,7 @@ export function ItemForm({
                             error={errors.storage_location_id}
                             hint={
                                 options.locations.length === 0
-                                    ? 'Set up boxes and binders under Storage.'
+                                    ? "Set up boxes and binders under Storage."
                                     : undefined
                             }
                         >
@@ -660,7 +656,7 @@ export function ItemForm({
                                 value={data.storage_location_id}
                                 onChange={(event) =>
                                     setData(
-                                        'storage_location_id',
+                                        "storage_location_id",
                                         event.target.value,
                                     )
                                 }
@@ -684,7 +680,7 @@ export function ItemForm({
                                 value={data.storage_position}
                                 onChange={(event) =>
                                     setData(
-                                        'storage_position',
+                                        "storage_position",
                                         event.target.value,
                                     )
                                 }
@@ -699,7 +695,7 @@ export function ItemForm({
                         <NativeSelect
                             value={data.status}
                             onChange={(event) =>
-                                setData('status', event.target.value)
+                                setData("status", event.target.value)
                             }
                             aria-label="Status"
                         >
@@ -723,7 +719,7 @@ export function ItemForm({
                                 max={100}
                                 value={data.quantity}
                                 onChange={(event) =>
-                                    setData('quantity', event.target.value)
+                                    setData("quantity", event.target.value)
                                 }
                             />
                         </Field>
@@ -737,7 +733,7 @@ export function ItemForm({
                         </p>
                     )}
                     <Button type="submit" size="lg" disabled={processing}>
-                        {editing ? 'Save changes' : 'Add to collection'}
+                        {editing ? "Save changes" : "Add to collection"}
                     </Button>
                     {!editing && (
                         <Button

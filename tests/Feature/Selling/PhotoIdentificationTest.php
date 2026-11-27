@@ -77,6 +77,40 @@ test('a photo is identified, normalized, and matched to catalog cards', function
         && $request['messages'][0]['content'][0]['type'] === 'image');
 });
 
+test('a back photo is sent to the model after the front', function () {
+    Http::preventStrayRequests();
+    Http::fake(['api.anthropic.com/v1/messages' => Http::response(claudeReply('{"number": "57", "confidence": "high"}'))]);
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('identify.photo.store'), [
+            'photo' => UploadedFile::fake()->image('front.jpg'),
+            'back_photo' => UploadedFile::fake()->image('back.png'),
+        ], ['Accept' => 'application/json'])
+        ->assertOk()
+        ->assertJsonPath('suggestion.number', '57');
+
+    Http::assertSent(function (Request $request): bool {
+        $content = $request['messages'][0]['content'];
+
+        return count($content) === 3
+            && $content[0]['source']['media_type'] === 'image/jpeg'
+            && $content[1]['source']['media_type'] === 'image/png'
+            && $content[2]['type'] === 'text';
+    });
+});
+
+test('a back photo that is not an image is rejected before calling the model', function () {
+    Http::preventStrayRequests();
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('identify.photo.store'), [
+            'photo' => UploadedFile::fake()->image('front.jpg'),
+            'back_photo' => UploadedFile::fake()->create('back.pdf', 10, 'application/pdf'),
+        ], ['Accept' => 'application/json'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['back_photo' => 'Use a JPEG, PNG, WebP, or GIF photo.']);
+});
+
 test('malformed model output returns a retry message instead of a suggestion', function (string $text) {
     Http::preventStrayRequests();
     Http::fake(['api.anthropic.com/v1/messages' => Http::response(claudeReply($text))]);

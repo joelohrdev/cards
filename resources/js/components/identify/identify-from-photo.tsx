@@ -1,40 +1,50 @@
-import { ScanSearch } from 'lucide-react';
-import { useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
-import { useLookup } from '@/hooks/use-lookup';
-import { shrinkPhoto } from '@/lib/shrink-photo';
-import { cn } from '@/lib/utils';
-import identify from '@/routes/identify';
-import type { PhotoSuggestion } from '@/types';
+import { Camera, ScanSearch } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { useLookup } from "@/hooks/use-lookup";
+import { shrinkPhoto } from "@/lib/shrink-photo";
+import { cn } from "@/lib/utils";
+import identify from "@/routes/identify";
+import type { PhotoSuggestion } from "@/types";
 
 /**
- * Longest edge sent to the vision model. The scaled-down photo is also what the
- * caller gets back to save as the card's front.
+ * Longest edge sent to the vision model. The scaled-down photos are also what the
+ * caller gets back to save as the card's front and back.
  */
 const MAX_EDGE = 1568;
 
+const NOT_CONFIGURED_MESSAGE =
+    "Photo identification isn’t set up yet. Add an Anthropic API key as ANTHROPIC_API_KEY in the .env file to turn it on.";
+
 function readCookie(name: string): string | null {
     const match = document.cookie
-        .split('; ')
+        .split("; ")
         .find((entry) => entry.startsWith(`${name}=`));
 
     return match ? decodeURIComponent(match.slice(name.length + 1)) : null;
 }
 
 /**
- * "Use a photo": opens the camera or file picker, asks the vision model what card it
- * is, and hands back a suggestion with likely catalog matches.
+ * "Scan front & back": takes a photo of the card's front, then its back (which can be
+ * skipped), asks the vision model what card it is, and hands back a suggestion with
+ * likely catalog matches plus both photos.
  */
 export function IdentifyFromPhoto({
     onResult,
 }: {
-    onResult: (suggestion: PhotoSuggestion, photo: File) => void;
+    onResult: (
+        suggestion: PhotoSuggestion,
+        front: File,
+        back: File | null,
+    ) => void;
 }) {
     const input = useRef<HTMLInputElement>(null);
+    const [front, setFront] = useState<File | null>(null);
+    const [frontPreview, setFrontPreview] = useState<string | null>(null);
     const [working, setWorking] = useState(false);
     const [message, setMessage] = useState<{
-        tone: 'ok' | 'error';
+        tone: "ok" | "error";
         text: string;
     } | null>(null);
     const { data: status } = useLookup<{ configured: boolean }>(
@@ -43,12 +53,22 @@ export function IdentifyFromPhoto({
     );
     const notConfigured = status !== null && !status.configured;
 
-    function choosePhoto() {
+    useEffect(() => {
+        if (!front) {
+            setFrontPreview(null);
+
+            return;
+        }
+
+        const url = URL.createObjectURL(front);
+        setFrontPreview(url);
+
+        return () => URL.revokeObjectURL(url);
+    }, [front]);
+
+    function openCamera() {
         if (notConfigured) {
-            setMessage({
-                tone: 'error',
-                text: 'Photo identification isn’t set up yet. Add an Anthropic API key as ANTHROPIC_API_KEY in the .env file to turn it on.',
-            });
+            setMessage({ tone: "error", text: NOT_CONFIGURED_MESSAGE });
 
             return;
         }
@@ -56,27 +76,49 @@ export function IdentifyFromPhoto({
         input.current?.click();
     }
 
-    async function upload(file: File | undefined) {
+    async function photoTaken(file: File | undefined) {
+        if (input.current) {
+            input.current.value = "";
+        }
+
         if (!file) {
             return;
         }
 
+        setMessage(null);
+
+        if (front === null) {
+            setFront(await shrinkPhoto(file, MAX_EDGE));
+
+            return;
+        }
+
+        await upload(front, file);
+    }
+
+    async function upload(frontPhoto: File, backFile: File | null) {
         setWorking(true);
         setMessage(null);
 
         try {
-            const photo = await shrinkPhoto(file, MAX_EDGE);
+            const back = backFile
+                ? await shrinkPhoto(backFile, MAX_EDGE)
+                : null;
             const body = new FormData();
-            body.append('photo', photo, photo.name);
+            body.append("photo", frontPhoto, frontPhoto.name);
+
+            if (back) {
+                body.append("back_photo", back, back.name);
+            }
 
             const response = await fetch(identify.photo.store.url(), {
-                method: 'POST',
+                method: "POST",
                 body,
-                credentials: 'same-origin',
+                credentials: "same-origin",
                 headers: {
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN': readCookie('XSRF-TOKEN') ?? '',
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-XSRF-TOKEN": readCookie("XSRF-TOKEN") ?? "",
                 },
             });
             const json = (await response.json().catch(() => ({}))) as {
@@ -86,13 +128,14 @@ export function IdentifyFromPhoto({
             };
 
             if (response.ok && json.suggestion) {
-                onResult(json.suggestion, photo);
+                onResult(json.suggestion, frontPhoto, back);
+                setFront(null);
                 setMessage({
-                    tone: 'ok',
+                    tone: "ok",
                     text:
                         json.suggestion.matches.length > 0
-                            ? 'Filled in what we could read. Check the details before saving.'
-                            : 'Filled in what we could read, but found no matching card in the catalog. Check the details before saving.',
+                            ? "Filled in what we could read. Check the details before saving."
+                            : "Filled in what we could read, but found no matching card in the catalog. Check the details before saving.",
                 });
 
                 return;
@@ -100,8 +143,8 @@ export function IdentifyFromPhoto({
 
             if (response.status === 429) {
                 setMessage({
-                    tone: 'error',
-                    text: 'That’s a lot of photos in a row. Wait a minute, then try again.',
+                    tone: "error",
+                    text: "That’s a lot of photos in a row. Wait a minute, then try again.",
                 });
 
                 return;
@@ -111,52 +154,94 @@ export function IdentifyFromPhoto({
                 ? Object.values(json.errors)[0]?.[0]
                 : undefined;
             setMessage({
-                tone: 'error',
+                tone: "error",
                 text:
                     firstError ??
                     json.message ??
-                    'Couldn’t identify that photo. Try again, or enter the card by hand.',
+                    "Couldn’t identify those photos. Try again, or enter the card by hand.",
             });
         } catch {
             setMessage({
-                tone: 'error',
-                text: 'Couldn’t reach the server. Check your connection and try again.',
+                tone: "error",
+                text: "Couldn’t reach the server. Check your connection and try again.",
             });
         } finally {
             setWorking(false);
-
-            if (input.current) {
-                input.current.value = '';
-            }
         }
     }
 
     return (
         <div className="grid gap-1.5">
-            <Button
-                type="button"
-                variant="outline"
-                onClick={choosePhoto}
-                disabled={working}
-            >
-                {working ? <Spinner /> : <ScanSearch />}
-                {working ? 'Reading the card…' : 'Use a photo'}
-            </Button>
+            {front === null ? (
+                <Button type="button" variant="outline" onClick={openCamera}>
+                    <ScanSearch />
+                    Scan front &amp; back
+                </Button>
+            ) : (
+                <div className="flex items-center gap-3 rounded-md border bg-muted/40 p-2">
+                    {frontPreview && (
+                        <img
+                            src={frontPreview}
+                            alt="Front of the card"
+                            className="aspect-[5/7] w-12 shrink-0 rounded-sm object-cover"
+                        />
+                    )}
+                    <div className="grid gap-2">
+                        <p className="text-sm">
+                            {working
+                                ? "Reading the card…"
+                                : "Got the front. Now flip the card over."}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                type="button"
+                                size="sm"
+                                onClick={openCamera}
+                                disabled={working}
+                            >
+                                {working ? <Spinner /> : <Camera />}
+                                Take the back
+                            </Button>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => upload(front, null)}
+                                disabled={working}
+                            >
+                                Skip the back
+                            </Button>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                    setFront(null);
+                                    setMessage(null);
+                                }}
+                                disabled={working}
+                            >
+                                Start over
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <input
                 ref={input}
                 type="file"
                 accept="image/*"
                 capture="environment"
                 className="hidden"
-                onChange={(event) => upload(event.target.files?.[0])}
+                onChange={(event) => photoTaken(event.target.files?.[0])}
             />
             {message && (
                 <p
                     className={cn(
-                        'text-xs',
-                        message.tone === 'error'
-                            ? 'text-destructive'
-                            : 'text-muted-foreground',
+                        "text-xs",
+                        message.tone === "error"
+                            ? "text-destructive"
+                            : "text-muted-foreground",
                     )}
                     role="status"
                 >

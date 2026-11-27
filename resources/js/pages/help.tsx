@@ -1,18 +1,18 @@
-import { Head, Link } from '@inertiajs/react';
-import { PageHeader } from '@/components/kit/page-header';
-import { Panel } from '@/components/kit/panel';
-import { dashboard } from '@/routes';
-import collection from '@/routes/collection';
-import ebay from '@/routes/ebay';
-import exportsRoutes from '@/routes/exports';
-import grading from '@/routes/grading';
-import imports from '@/routes/imports';
-import locations from '@/routes/locations';
-import sales from '@/routes/sales';
-import sets from '@/routes/sets';
-import shareLinks from '@/routes/share-links';
-import tags from '@/routes/tags';
-import wantList from '@/routes/want-list';
+import { Head, Link } from "@inertiajs/react";
+import { PageHeader } from "@/components/kit/page-header";
+import { Panel } from "@/components/kit/panel";
+import { dashboard } from "@/routes";
+import collection from "@/routes/collection";
+import ebay from "@/routes/ebay";
+import exportsRoutes from "@/routes/exports";
+import grading from "@/routes/grading";
+import imports from "@/routes/imports";
+import locations from "@/routes/locations";
+import sales from "@/routes/sales";
+import sets from "@/routes/sets";
+import shareLinks from "@/routes/share-links";
+import tags from "@/routes/tags";
+import wantList from "@/routes/want-list";
 
 type Section = {
     id: string;
@@ -24,7 +24,7 @@ function Go({
     href,
     children,
 }: {
-    href: Parameters<typeof Link>[0]['href'];
+    href: Parameters<typeof Link>[0]["href"];
     children: React.ReactNode;
 }) {
     return (
@@ -55,8 +55,8 @@ function Points({ children }: { children: React.ReactNode }) {
 
 const sections: Section[] = [
     {
-        id: 'start',
-        title: 'Getting started',
+        id: "start",
+        title: "Getting started",
         body: (
             <>
                 <p>
@@ -70,18 +70,18 @@ const sections: Section[] = [
                 <p>A good first hour looks like this:</p>
                 <Steps>
                     <li>
-                        Already keep a spreadsheet? Bring it in with{' '}
+                        Already keep a spreadsheet? Bring it in with{" "}
                         <Go href={imports.index()}>Import</Go> (see Importing a
                         spreadsheet below).
                     </li>
                     <li>
-                        Set up your boxes and binders under{' '}
+                        Set up your boxes and binders under{" "}
                         <Go href={locations.index()}>Storage</Go> so every card
                         gets an address as you add it.
                     </li>
                     <li>
-                        Add cards with{' '}
-                        <Go href={collection.create()}>Add a card</Go>, or{' '}
+                        Add cards with{" "}
+                        <Go href={collection.create()}>Add a card</Go>, or{" "}
                         <Go href={collection.quickAdd()}>Quick add</Go> for a
                         stack from one set.
                     </li>
@@ -95,8 +95,8 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'home-screen',
-        title: 'Putting the app on your iPad',
+        id: "home-screen",
+        title: "Putting the app on your iPad",
         body: (
             <>
                 <p>
@@ -123,8 +123,8 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'adding',
-        title: 'Adding cards',
+        id: "adding",
+        title: "Adding cards",
         body: (
             <>
                 <p>
@@ -134,7 +134,7 @@ const sections: Section[] = [
                 <Steps>
                     <li>
                         Under “Which card?”, search by player, year, set or
-                        number. If nobody has added the card yet, choose{' '}
+                        number. If nobody has added the card yet, choose{" "}
                         <em>Enter it by hand</em>, pick or create the set, and
                         type the card number and player.
                     </li>
@@ -152,12 +152,20 @@ const sections: Section[] = [
                     </li>
                     <li>
                         Fill in what you paid, what it’s worth now, where it
-                        lives and any tags, then press{' '}
-                        <em>Add to collection</em>.{' '}
+                        lives and any tags, then press{" "}
+                        <em>Add to collection</em>.{" "}
                         <em>Add and enter another</em> keeps the set and team
                         filled in for the next card.
                     </li>
                 </Steps>
+                <p>
+                    <strong>Scan front &amp; back</strong> takes a photo of the
+                    front of the card, then the back (you can skip it), and
+                    fills in what it can read: year, set, number, player and,
+                    for slabs, the grade. Both photos are saved with the card.
+                    Always check the result before saving. It needs an Anthropic
+                    API key in the server settings.
+                </p>
                 <p>
                     <strong>Several copies?</strong> Set the quantity. Each copy
                     is tracked on its own so you can sell or grade them
@@ -167,8 +175,8 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'quick-add',
-        title: 'Quick add and checklists',
+        id: "quick-add",
+        title: "Quick add and checklists",
         body: (
             <>
                 <p>
@@ -178,7 +186,7 @@ const sections: Section[] = [
                     in from the checklist, and the next row is ready.
                 </p>
                 <p>
-                    Checklists live under{' '}
+                    Checklists live under{" "}
                     <Go href={sets.index()}>Sets & checklists</Go>. To add one,
                     open the set and paste the checklist, one card per line:
                 </p>
@@ -199,14 +207,14 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'finding',
-        title: 'Finding a card',
+        id: "finding",
+        title: "Finding a card",
         body: (
             <>
                 <p>
                     Press <Kbd>⌘K</Kbd> (or <Kbd>Ctrl K</Kbd>, or <Kbd>/</Kbd>)
                     from anywhere to jump straight to a card. For more control,
-                    use the search box and filters on{' '}
+                    use the search box and filters on{" "}
                     <Go href={collection.index()}>All cards</Go>.
                 </p>
                 <p>Search understands collector shorthand. Mix and match:</p>
@@ -222,22 +230,22 @@ const sections: Section[] = [
                         </thead>
                         <tbody className="divide-y">
                             {[
-                                ['griffey 1989', 'Griffey cards from 1989'],
-                                ['2023-24', 'cards from the 2023-24 season'],
-                                ['#23', 'card number 23'],
+                                ["griffey 1989", "Griffey cards from 1989"],
+                                ["2023-24", "cards from the 2023-24 season"],
+                                ["#23", "card number 23"],
                                 [
-                                    'psa 10',
-                                    'PSA 10 slabs (also bgs 9.5, sgc 9…)',
+                                    "psa 10",
+                                    "PSA 10 slabs (also bgs 9.5, sgc 9…)",
                                 ],
-                                ['/99', 'cards numbered to 99'],
-                                ['rc auto', 'rookie autographs'],
+                                ["/99", "cards numbered to 99"],
+                                ["rc auto", "rookie autographs"],
                                 [
-                                    'relic, sp',
-                                    'memorabilia cards, short prints',
+                                    "relic, sp",
+                                    "memorabilia cards, short prints",
                                 ],
                                 [
-                                    'graded, raw',
-                                    'slabbed or ungraded cards only',
+                                    "graded, raw",
+                                    "slabbed or ungraded cards only",
                                 ],
                             ].map(([query, finds]) => (
                                 <tr key={query}>
@@ -259,8 +267,8 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'organizing',
-        title: 'Tags, storage and bulk changes',
+        id: "organizing",
+        title: "Tags, storage and bulk changes",
         body: (
             <>
                 <p>
@@ -275,7 +283,7 @@ const sections: Section[] = [
                     A card’s page always shows where it lives.
                 </p>
                 <p>
-                    To change many cards at once, tick them on{' '}
+                    To change many cards at once, tick them on{" "}
                     <Go href={collection.index()}>All cards</Go>. A bar appears
                     that can add or remove tags, move them to storage, change
                     their status or set their value.
@@ -284,8 +292,8 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'values',
-        title: 'Values and comps',
+        id: "values",
+        title: "Values and comps",
         body: (
             <>
                 <p>
@@ -317,8 +325,8 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'want-list',
-        title: 'Want list',
+        id: "want-list",
+        title: "Want list",
         body: (
             <p>
                 The <Go href={wantList.index()}>Want list</Go> holds the cards
@@ -330,8 +338,8 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'grading',
-        title: 'Grading submissions',
+        id: "grading",
+        title: "Grading submissions",
         body: (
             <>
                 <p>
@@ -350,7 +358,7 @@ const sections: Section[] = [
                         its cards show as “At grading”.
                     </li>
                     <li>
-                        When the slabs arrive, choose <em>Record results</em>{' '}
+                        When the slabs arrive, choose <em>Record results</em>{" "}
                         and enter each grade and cert number. The cards become
                         graded cards in your collection and the submission
                         closes.
@@ -364,14 +372,14 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'selling',
-        title: 'Selling and trading',
+        id: "selling",
+        title: "Selling and trading",
         body: (
             <>
                 <p>
                     Sold a card at a show or to a friend? On the card’s page
                     choose <em>Record a sale</em> and enter the price, fees and
-                    shipping. If you swapped it instead, use{' '}
+                    shipping. If you swapped it instead, use{" "}
                     <em>Mark as traded instead</em>.
                 </p>
                 <p>
@@ -383,8 +391,8 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'ebay',
-        title: 'Listing on eBay',
+        id: "ebay",
+        title: "Listing on eBay",
         body: (
             <>
                 <Steps>
@@ -404,7 +412,7 @@ const sections: Section[] = [
                         listing.
                     </li>
                     <li>
-                        The other members get an email and see it under{' '}
+                        The other members get an email and see it under{" "}
                         <Go href={ebay.approvals.index()}>Approvals</Go>. Admins
                         aren’t asked. Once every member asked has approved, it
                         goes live on eBay. If anyone declines, it goes back to a
@@ -416,19 +424,19 @@ const sections: Section[] = [
                 <p>
                     Every 15 minutes the app checks eBay for orders. When a card
                     sells, it records the sale and marks the card as sold. See
-                    everything you’ve listed under{' '}
+                    everything you’ve listed under{" "}
                     <Go href={ebay.listings.index()}>eBay</Go>.
                 </p>
             </>
         ),
     },
     {
-        id: 'import',
-        title: 'Importing a spreadsheet',
+        id: "import",
+        title: "Importing a spreadsheet",
         body: (
             <Steps>
                 <li>
-                    Save your spreadsheet as a CSV file and upload it on{' '}
+                    Save your spreadsheet as a CSV file and upload it on{" "}
                     <Go href={imports.index()}>Import</Go>.
                 </li>
                 <li>
@@ -445,8 +453,8 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'sharing',
-        title: 'Exports and share links',
+        id: "sharing",
+        title: "Exports and share links",
         body: (
             <>
                 <p>
@@ -465,8 +473,8 @@ const sections: Section[] = [
         ),
     },
     {
-        id: 'account',
-        title: 'Your account',
+        id: "account",
+        title: "Your account",
         body: (
             <p>
                 Change your name, email and password from the settings menu. New

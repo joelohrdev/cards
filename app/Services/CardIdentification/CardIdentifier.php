@@ -33,9 +33,11 @@ class CardIdentifier
     private const array FALLBACK_MODELS = ['claude-fable-5-1', 'claude-opus-5-5', 'claude-opus-5', 'claude-sonnet-5-5'];
 
     private const string PROMPT = <<<'TEXT'
-        Identify the trading card in this photo for a collector's inventory.
+        Identify the trading card in these photos for a collector's inventory. The first photo is
+        the card's front; a second photo, when present, is the same card's back.
 
-        Read what is printed on the card (front or back) and on any grading slab label. Fill each
+        Read what is printed on the card (front and back) and on any grading slab label. The back
+        usually carries the card number, the copyright year, the manufacturer and the set's name. Fill each
         field only with what you can see or are confident about from the card's design; use null
         when unsure rather than guessing.
 
@@ -56,13 +58,13 @@ class CardIdentifier
     }
 
     /**
-     * Identify the card in a photo.
+     * Identify the card from a photo of its front and, optionally, its back.
      *
      * @return array{sport: string|null, year: int|null, manufacturer: string|null, set_name: string|null, number: string|null, name: string|null, team: string|null, parallel: string|null, serial_number: int|null, print_run: int|null, is_rookie: bool, is_autograph: bool, is_memorabilia: bool, is_graded: bool, grader: string|null, grade: string|null, cert_number: string|null, confidence: string}
      *
      * @throws CardIdentificationFailed
      */
-    public function identify(UploadedFile $photo): array
+    public function identify(UploadedFile $front, ?UploadedFile $back = null): array
     {
         $model = (string) config('services.anthropic.model');
         $useFallbacks = in_array($model, self::FALLBACK_MODELS, true);
@@ -77,14 +79,7 @@ class CardIdentifier
             'messages' => [[
                 'role' => 'user',
                 'content' => [
-                    [
-                        'type' => 'image',
-                        'source' => [
-                            'type' => 'base64',
-                            'media_type' => $photo->getMimeType(),
-                            'data' => base64_encode((string) $photo->get()),
-                        ],
-                    ],
+                    ...array_map(self::imageBlock(...), array_filter([$front, $back])),
                     ['type' => 'text', 'text' => self::PROMPT],
                 ],
             ]],
@@ -126,6 +121,23 @@ class CardIdentifier
             ->implode('');
 
         return self::normalize($text);
+    }
+
+    /**
+     * A base64 image content block for one photo.
+     *
+     * @return array{type: string, source: array{type: string, media_type: string|null, data: string}}
+     */
+    private static function imageBlock(UploadedFile $photo): array
+    {
+        return [
+            'type' => 'image',
+            'source' => [
+                'type' => 'base64',
+                'media_type' => $photo->getMimeType(),
+                'data' => base64_encode((string) $photo->get()),
+            ],
+        ];
     }
 
     /**

@@ -10,7 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Identifies a card from a photo with a vision model and finds matching catalog cards.
+ * Identifies a card from photos of its front and (optionally) back with a vision model and finds matching catalog cards.
  */
 class PhotoIdentificationController extends Controller
 {
@@ -33,14 +33,15 @@ class PhotoIdentificationController extends Controller
 
         $request->validate([
             'photo' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:3584'],
+            'back_photo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:3584'],
         ], [
-            'photo.required' => 'Take or choose a photo of the card.',
-            'photo.mimes' => 'Use a JPEG, PNG, WebP, or GIF photo. On iPhone, set the camera format to “Most Compatible”.',
-            'photo.max' => 'That photo is too large. Use one under 3.5 MB.',
+            'photo.required' => 'Take or choose a photo of the front of the card.',
+            '*.mimes' => 'Use a JPEG, PNG, WebP, or GIF photo. On iPhone, set the camera format to “Most Compatible”.',
+            '*.max' => 'That photo is too large. Use one under 3.5 MB.',
         ]);
 
         try {
-            $suggestion = $identifier->identify($request->file('photo'));
+            $suggestion = $identifier->identify($request->file('photo'), $request->file('back_photo'));
         } catch (CardIdentificationFailed $exception) {
             report($exception);
 
