@@ -79,6 +79,17 @@ type ItemFormData = {
 };
 
 /**
+ * Compare names the way the server's ExistingNameMatcher does: "Gold Refractor" and
+ * "gold-refractor" are the same parallel.
+ */
+function nameKey(name: string): string {
+    return name
+        .normalize('NFD')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '');
+}
+
+/**
  * Shared add/edit form for a card in the collection.
  */
 export function ItemForm({
@@ -161,12 +172,13 @@ export function ItemForm({
         backPhoto: File | null,
     ) {
         const match = suggestion.matches[0] ?? null;
-        const parallelsForMatch = match?.parallels ?? [];
+        const knownParallels =
+            match?.parallels ?? suggestion.set?.parallels ?? [];
         const knownParallel = suggestion.parallel
-            ? parallelsForMatch.find(
+            ? knownParallels.find(
                   (parallel) =>
-                      parallel.name.toLowerCase() ===
-                      suggestion.parallel?.toLowerCase(),
+                      nameKey(parallel.name) ===
+                      nameKey(suggestion.parallel ?? ''),
               )
             : undefined;
 
@@ -175,14 +187,20 @@ export function ItemForm({
             setPicked(match);
         } else {
             setMode('new');
-            setPickedSet(null);
-            setSetDraft({
-                sport:
-                    suggestion.sport ?? options.sports[0]?.value ?? 'baseball',
-                year: suggestion.year ? String(suggestion.year) : '',
-                manufacturer: suggestion.manufacturer ?? '',
-                name: suggestion.set_name ?? '',
-            });
+            setPickedSet(suggestion.set);
+            setSetDraft(
+                suggestion.set
+                    ? null
+                    : {
+                          sport:
+                              suggestion.sport ??
+                              options.sports[0]?.value ??
+                              'baseball',
+                          year: suggestion.year ? String(suggestion.year) : '',
+                          manufacturer: suggestion.manufacturer ?? '',
+                          name: suggestion.set_name ?? '',
+                      },
+            );
             setCardDraft({
                 ...emptyCardDraft,
                 number: suggestion.number ?? '',

@@ -3,6 +3,7 @@
 use App\Models\Card;
 use App\Models\CardSet;
 use App\Models\Manufacturer;
+use App\Models\Parallel;
 use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
@@ -150,6 +151,55 @@ test('team and brand read from a photo take the spelling already in the app', fu
         ->assertJsonPath('suggestion.team', 'Seattle Mariners')
         ->assertJsonPath('suggestion.name', 'Someone New');
 });
+
+test('a photo of a card not in the checklist picks the existing set it belongs to', function () {
+    Http::preventStrayRequests();
+    Http::fake(['api.anthropic.com/v1/messages' => Http::response(claudeReply(json_encode([
+        'sport' => 'baseball',
+        'year' => 2023,
+        'manufacturer' => 'topps',
+        'set_name' => 'CHROME',
+        'number' => '999',
+        'name' => 'Someone New',
+        'confidence' => 'high',
+    ])))]);
+
+    $topps = Manufacturer::factory()->create(['name' => 'Topps']);
+    $chrome = CardSet::factory()->for($topps)->create(['year' => 2023, 'name' => 'Chrome', 'sport' => 'baseball']);
+    Parallel::factory()->for($chrome)->create(['name' => 'Refractor']);
+    CardSet::factory()->for($topps)->create(['year' => 2022, 'name' => 'Chrome', 'sport' => 'baseball']);
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('identify.photo.store'), ['photo' => UploadedFile::fake()->image('card.jpg')], ['Accept' => 'application/json'])
+        ->assertOk()
+        ->assertJsonCount(0, 'suggestion.matches')
+        ->assertJsonPath('suggestion.set.id', $chrome->id)
+        ->assertJsonPath('suggestion.set.parallels.0.name', 'Refractor')
+        ->assertJsonPath('suggestion.set_name', 'Chrome')
+        ->assertJsonPath('suggestion.manufacturer', 'Topps');
+});
+
+test('a set from another year or brand isn’t picked, but its spelling is used', function (array $read) {
+    Http::preventStrayRequests();
+    Http::fake(['api.anthropic.com/v1/messages' => Http::response(claudeReply(json_encode([
+        'sport' => 'baseball',
+        'set_name' => 'chrome',
+        'confidence' => 'high',
+        ...$read,
+    ])))]);
+
+    CardSet::factory()->for(Manufacturer::factory()->state(['name' => 'Topps']))->create(['year' => 2023, 'name' => 'Chrome', 'sport' => 'baseball']);
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('identify.photo.store'), ['photo' => UploadedFile::fake()->image('card.jpg')], ['Accept' => 'application/json'])
+        ->assertOk()
+        ->assertJsonPath('suggestion.set', null)
+        ->assertJsonPath('suggestion.set_name', 'Chrome');
+})->with([
+    'another year' => [['year' => 2021, 'manufacturer' => 'Topps']],
+    'another brand' => [['year' => 2023, 'manufacturer' => 'Bowman']],
+    'no year' => [['manufacturer' => 'Topps']],
+]);
 
 test('malformed model output returns a retry message instead of a suggestion', function (string $text) {
     Http::preventStrayRequests();

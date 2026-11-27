@@ -147,4 +147,6 @@ export type PhotoSuggestion = {
         set: CardSetSummary;
         parallels: ParallelSummary[];
     })[];
+    /** An existing set matching the year, brand and name read, when no card matched. */
+    set: (CardSetSummary & { parallels: ParallelSummary[] }) | null;
 };

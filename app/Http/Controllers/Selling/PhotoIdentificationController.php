@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Selling;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CardSetResource;
 use App\Services\CardIdentification\CardIdentificationFailed;
 use App\Services\CardIdentification\CardIdentifier;
 use App\Services\CardIdentification\CatalogMatcher;
@@ -52,9 +53,22 @@ class PhotoIdentificationController extends Controller
         $suggestion['name'] = $existingNames->players($suggestion['name'], $suggestion['sport']);
         $suggestion['team'] = $existingNames->team($suggestion['team'], $suggestion['sport']);
         $suggestion['manufacturer'] = $existingNames->manufacturer($suggestion['manufacturer']);
+        $set = $existingNames->set($suggestion['set_name'], $suggestion['year'], $suggestion['manufacturer'], $suggestion['sport']);
+        $suggestion['set_name'] = $set->name ?? $existingNames->setName($suggestion['set_name'], $suggestion['manufacturer']);
+
+        if ($set !== null && $set->manufacturer !== null) {
+            $suggestion['manufacturer'] = $set->manufacturer->name;
+        }
 
         return response()->json([
-            'suggestion' => [...$suggestion, 'matches' => $matcher->matches($suggestion)],
+            'suggestion' => [
+                ...$suggestion,
+                'matches' => $matcher->matches($suggestion),
+                'set' => $set === null ? null : [
+                    ...CardSetResource::make($set)->resolve(),
+                    'parallels' => $set->parallels()->orderBy('name')->get()->map->only(['id', 'name', 'print_run'])->values(),
+                ],
+            ],
         ]);
     }
 }

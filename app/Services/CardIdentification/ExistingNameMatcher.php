@@ -2,6 +2,7 @@
 
 namespace App\Services\CardIdentification;
 
+use App\Models\CardSet;
 use App\Models\Manufacturer;
 use App\Models\Player;
 use App\Models\Team;
@@ -10,7 +11,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
- * Swaps the player, team and brand names a photo was read as for the spelling already in the
+ * Swaps the player, team, brand and set names a photo was read as for the spelling already in the
  * app, so a scan doesn't add "Ken Griffey Jr" next to an existing "Ken Griffey Jr." or
  * "upper deck" next to "Upper Deck".
  *
@@ -52,6 +53,57 @@ class ExistingNameMatcher
     public function manufacturer(?string $name): ?string
     {
         return blank($name) ? $name : self::pick(self::byKey(Manufacturer::query()->get(['id', 'name'])), $name);
+    }
+
+    /**
+     * The existing set the card is from: same year, a name that matches apart from spelling, and
+     * the same brand and sport when both sides have one. Without a year there's no telling which
+     * year's set it is, so none is returned.
+     */
+    public function set(?string $name, ?int $year, ?string $manufacturer = null, ?string $sport = null): ?CardSet
+    {
+        if (blank($name) || $year === null) {
+            return null;
+        }
+
+        $nameKey = self::key($name);
+        $manufacturerKey = blank($manufacturer) ? null : self::key($manufacturer);
+
+        $candidates = CardSet::query()
+            ->with('manufacturer')
+            ->where('year', $year)
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (CardSet $set): bool => self::key($set->name) === $nameKey
+                && ($manufacturerKey === null || $set->manufacturer === null || self::key($set->manufacturer->name) === $manufacturerKey)
+                && ($sport === null || $set->sport->value === $sport));
+
+        return $candidates->first(fn (CardSet $set): bool => $manufacturerKey !== null && $set->manufacturer !== null)
+            ?? $candidates->first();
+    }
+
+    /**
+     * The existing spelling of a set name, preferring a set from the same brand.
+     */
+    public function setName(?string $name, ?string $manufacturer = null): ?string
+    {
+        if (blank($name)) {
+            return $name;
+        }
+
+        $manufacturerKey = blank($manufacturer) ? null : self::key($manufacturer);
+        $sameName = CardSet::query()
+            ->with('manufacturer')
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (CardSet $set): bool => self::key($set->name) === self::key($name));
+
+        $match = $sameName->first(fn (CardSet $set): bool => $manufacturerKey !== null
+            && $set->manufacturer !== null
+            && self::key($set->manufacturer->name) === $manufacturerKey)
+            ?? $sameName->first();
+
+        return $match->name ?? Str::squish($name);
     }
 
     /**
