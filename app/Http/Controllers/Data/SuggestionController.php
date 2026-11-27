@@ -22,6 +22,7 @@ class SuggestionController extends Controller
         'tag' => ['tags', 'name'],
         'purchase_source' => ['collection_items', 'purchase_source'],
         'manufacturer' => ['manufacturers', 'name'],
+        'player' => ['players', 'name'],
         'team' => ['teams', 'name'],
         'subset' => ['cards', 'subset'],
         'service_level' => ['grading_submissions', 'service_level'],

@@ -388,11 +388,11 @@ export function CardPicker({
                             hint="Separate multiple players with “/”."
                             className="sm:col-span-3"
                         >
-                            <Input
+                            <SuggestInput
+                                field="player"
+                                separator="/"
                                 value={cardDraft.name}
-                                onChange={(event) =>
-                                    updateCard({ name: event.target.value })
-                                }
+                                onChange={(name) => updateCard({ name })}
                                 placeholder="Ken Griffey Jr."
                             />
                         </Field>

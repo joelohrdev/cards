@@ -8,6 +8,7 @@ import type {
 import { TagInput } from '@/components/collection/tag-input';
 import { controlClass, Field, NativeSelect } from '@/components/kit/field';
 import { PageHeader } from '@/components/kit/page-header';
+import { SuggestInput } from '@/components/kit/suggest-input';
 import { Panel } from '@/components/kit/panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -370,7 +371,9 @@ export default function QuickAdd({ options }: { options: FormOptions }) {
                                             />
                                         </td>
                                         <td className="px-2 py-2">
-                                            <input
+                                            <SuggestInput
+                                                field="player"
+                                                separator="/"
                                                 value={
                                                     draft.name ||
                                                     checklistName(
@@ -378,11 +381,10 @@ export default function QuickAdd({ options }: { options: FormOptions }) {
                                                     ) ||
                                                     ''
                                                 }
-                                                onChange={(event) =>
+                                                onChange={(name) =>
                                                     setDraft({
                                                         ...draft,
-                                                        name: event.target
-                                                            .value,
+                                                        name,
                                                     })
                                                 }
                                                 placeholder={

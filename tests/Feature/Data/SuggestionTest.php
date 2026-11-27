@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\CollectionItem;
+use App\Models\Player;
 use App\Models\Tag;
 use App\Models\User;
 
@@ -32,6 +33,15 @@ test('tags are suggested from every user’s tags', function () {
     $this->actingAs(User::factory()->create())
         ->getJson(route('suggestions', ['field' => 'tag', 'q' => 'fl']))
         ->assertExactJson(['suggestions' => ['Flip']]);
+});
+
+test('players already in the catalog are suggested', function () {
+    Player::factory()->create(['name' => 'Michael Jordan']);
+    Player::factory()->create(['name' => 'Scottie Pippen']);
+
+    $this->actingAs(User::factory()->create())
+        ->getJson(route('suggestions', ['field' => 'player', 'q' => 'pip']))
+        ->assertExactJson(['suggestions' => ['Scottie Pippen']]);
 });
 
 test('only known fields can be looked up', function () {

@@ -12,6 +12,7 @@ export type SuggestionField =
     | 'tag'
     | 'purchase_source'
     | 'manufacturer'
+    | 'player'
     | 'team'
     | 'subset'
     | 'service_level'
@@ -31,8 +32,11 @@ type Props = Omit<
     onPick?: (value: string) => void;
     /** Values to leave out of the list, e.g. tags already on the card. */
     exclude?: string[];
-    /** Complete only the part after the last comma, for comma-separated lists. */
-    commaSeparated?: boolean;
+    /**
+     * For a field holding several values (tags "PC, Flip", players "Jordan / Pippen"):
+     * suggest and complete only the part after the last separator.
+     */
+    separator?: ',' | '/';
     /** Render a bare input (for embedding inside another control). */
     bare?: boolean;
 };
@@ -49,7 +53,7 @@ export function SuggestInput({
     onChange,
     onPick,
     exclude = [],
-    commaSeparated = false,
+    separator,
     bare = false,
     className,
     onKeyDown,
@@ -63,8 +67,13 @@ export function SuggestInput({
     const [highlighted, setHighlighted] = useState(-1);
     const value = controlledValue ?? ownValue;
 
-    const parts = commaSeparated ? value.split(',') : [value];
+    const parts = separator ? value.split(separator) : [value];
+    const earlier = parts
+        .slice(0, -1)
+        .map((part) => part.trim())
+        .filter(Boolean);
     const typed = (parts[parts.length - 1] ?? '').trim();
+    const glue = separator === ',' ? ', ' : ` ${separator} `;
 
     const { data } = useLookup<{ suggestions: string[] }>(
         open ? suggestionsRoute.url(field, { query: { q: typed } }) : null,
@@ -72,12 +81,7 @@ export function SuggestInput({
     );
 
     const excluded = new Set(
-        [
-            ...exclude,
-            ...(commaSeparated
-                ? parts.slice(0, -1).map((part) => part.trim())
-                : []),
-        ].map((entry) => entry.toLowerCase()),
+        [...exclude, ...earlier].map((entry) => entry.toLowerCase()),
     );
     const options = (data?.suggestions ?? []).filter(
         (option) => !excluded.has(option.toLowerCase()),
@@ -105,21 +109,27 @@ export function SuggestInput({
             return;
         }
 
-        if (commaSeparated) {
+        if (separator) {
+            // Comma lists usually go on (more tags); a "/" list is usually done.
             setValue(
-                [...parts.slice(0, -1), ` ${option}`].join(',').trim() + ', ',
+                [...earlier, option].join(glue) +
+                    (separator === ',' ? glue : ''),
             );
 
-            return;
+            if (separator === ',') {
+                return;
+            }
+        } else {
+            setValue(option);
         }
 
-        setValue(option);
         setOpen(false);
     }
 
     function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
         if (showList && event.key === 'ArrowDown') {
             event.preventDefault();
+            event.stopPropagation();
             setHighlighted((current) =>
                 Math.min(current + 1, options.length - 1),
             );
@@ -129,20 +139,24 @@ export function SuggestInput({
 
         if (showList && event.key === 'ArrowUp') {
             event.preventDefault();
+            event.stopPropagation();
             setHighlighted((current) => Math.max(current - 1, -1));
 
             return;
         }
 
-        if (event.key === 'Escape' && open) {
+        if (event.key === 'Escape' && showList) {
             event.preventDefault();
+            event.stopPropagation();
             setOpen(false);
 
             return;
         }
 
+        // Picking with Enter mustn't also submit a form or add a Quick add row.
         if (event.key === 'Enter' && showList && options[highlighted]) {
             event.preventDefault();
+            event.stopPropagation();
             pick(options[highlighted]);
 
             return;
@@ -176,12 +190,12 @@ export function SuggestInput({
                 onBlur={(event) => {
                     setOpen(false);
 
-                    if (
-                        !commaSeparated &&
-                        exactMatch &&
-                        exactMatch !== value.trim()
-                    ) {
-                        setValue(exactMatch);
+                    if (exactMatch && exactMatch !== typed) {
+                        setValue(
+                            separator
+                                ? [...earlier, exactMatch].join(glue)
+                                : exactMatch,
+                        );
                     }
 
                     onBlur?.(event);

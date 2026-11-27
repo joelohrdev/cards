@@ -92,7 +92,7 @@ export function BulkBar({
                     <div className="w-56">
                         <SuggestInput
                             field="tag"
-                            commaSeparated
+                            separator=","
                             value={value}
                             onChange={setValue}
                             placeholder="Tag names, comma separated"

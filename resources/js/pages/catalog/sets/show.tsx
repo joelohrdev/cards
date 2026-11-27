@@ -772,7 +772,10 @@ export default function SetShow({ set, cards: checklist, options }: Props) {
                                         hint="Separate with “/”."
                                         className="sm:col-span-2"
                                     >
-                                        <Input
+                                        <SuggestInput
+                                            key={editingCard.id}
+                                            field="player"
+                                            separator="/"
                                             name="players"
                                             defaultValue={editingCard.players.join(
                                                 ' / ',
@@ -783,11 +786,11 @@ export default function SetShow({ set, cards: checklist, options }: Props) {
                                         label="Team"
                                         className="sm:col-span-2"
                                     >
-                                        <Input
+                                        <SuggestInput
+                                            key={editingCard.id}
+                                            field="team"
                                             name="team"
-                                            defaultValue={
-                                                editingCard.team ?? ''
-                                            }
+                                            defaultValue={editingCard.team}
                                         />
                                     </Field>
                                     <Field
