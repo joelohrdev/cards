@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import tidyNames from '@/routes/tidy-names';
 import users from '@/routes/users';
 
 const sections = [
@@ -19,7 +20,11 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { auth } = usePage().props;
     const visibleSections =
         auth.user.role === 'admin'
-            ? [...sections, { title: 'Users', href: users.index() }]
+            ? [
+                  ...sections,
+                  { title: 'Users', href: users.index() },
+                  { title: 'Tidy up names', href: tidyNames.index() },
+              ]
             : sections;
 
     return (

@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AcceptInvitationController;
 use App\Http\Controllers\Settings\InvitationController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Settings\TidyNamesController;
 use App\Http\Controllers\Settings\UserController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,8 @@ Route::middleware(['auth', 'verified', 'can:manage-team'])->group(function () {
     Route::delete('settings/users/{member}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::post('settings/users/invitations', [InvitationController::class, 'store'])->name('users.invitations.store');
     Route::delete('settings/users/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('users.invitations.destroy');
+    Route::get('settings/tidy-names', [TidyNamesController::class, 'index'])->name('tidy-names.index');
+    Route::post('settings/tidy-names', [TidyNamesController::class, 'store'])->name('tidy-names.store');
 });
 
 Route::middleware('guest')->group(function () {

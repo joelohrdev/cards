@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property int $id
  * @property string $name
+ * @property-read int $card_sets_count
  */
 #[Fillable(['name'])]
 class Manufacturer extends Model

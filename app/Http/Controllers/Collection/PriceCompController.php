@@ -7,6 +7,7 @@ use App\Enums\Grader;
 use App\Http\Controllers\Controller;
 use App\Models\CollectionItem;
 use App\Models\PriceComp;
+use App\Support\ExistingNames;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class PriceCompController extends Controller
     /**
      * Record a sold comp for an item's card, optionally adopting it as the item's value.
      */
-    public function store(Request $request, CollectionItem $item): RedirectResponse
+    public function store(Request $request, CollectionItem $item, ExistingNames $existingNames): RedirectResponse
     {
         $this->normalizeMoneyInput($request, ['price']);
 
@@ -39,6 +40,7 @@ class PriceCompController extends Controller
 
         $comp = $request->user()->priceComps()->create([
             ...Arr::except($validated, 'apply_to_item'),
+            'source' => $existingNames->spelling('comp_source', $validated['source'] ?? null),
             'card_id' => $item->card_id,
             'price' => Money::toCents($validated['price']),
         ]);

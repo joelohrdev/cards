@@ -444,14 +444,37 @@ export function ItemForm({
                         >
                             {newParallel ? (
                                 <div className="flex gap-2">
-                                    <Input
-                                        value={data.parallel_name}
-                                        onChange={(event) =>
-                                            setData(
-                                                'parallel_name',
-                                                event.target.value,
-                                            )
+                                    <SuggestInput
+                                        field="parallel"
+                                        setId={
+                                            mode === 'existing'
+                                                ? (picked?.set.id ?? null)
+                                                : (pickedSet?.id ?? null)
                                         }
+                                        value={data.parallel_name}
+                                        onChange={(name) =>
+                                            setData('parallel_name', name)
+                                        }
+                                        onPick={(name) => {
+                                            const existing = parallels.find(
+                                                (parallel) =>
+                                                    parallel.name === name,
+                                            );
+
+                                            if (existing) {
+                                                setNewParallel(false);
+                                                form.setData((current) => ({
+                                                    ...current,
+                                                    parallel_id: String(
+                                                        existing.id,
+                                                    ),
+                                                    parallel_name: '',
+                                                    parallel_print_run: '',
+                                                }));
+                                            } else {
+                                                setData('parallel_name', name);
+                                            }
+                                        }}
                                         placeholder="Silver Prizm, Gold Refractor…"
                                     />
                                     <Input

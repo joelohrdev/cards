@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Card;
 use App\Models\Player;
 use App\Models\Team;
+use App\Support\ExistingNames;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class CardController extends Controller
@@ -17,7 +17,7 @@ class CardController extends Controller
     /**
      * Correct a checklist card's details.
      */
-    public function update(Request $request, Card $card): RedirectResponse
+    public function update(Request $request, Card $card, ExistingNames $existingNames): RedirectResponse
     {
         $validated = $request->validate([
             'number' => ['required', 'string', 'max:30'],
@@ -35,22 +35,19 @@ class CardController extends Controller
         ]);
 
         $sport = $card->cardSet->sport;
+        $team = $existingNames->spelling('team', $validated['team'] ?? null, $sport->value);
 
         $card->update([
             ...Arr::except($validated, ['players', 'team']),
-            'team_id' => filled($validated['team'] ?? null)
-                ? Team::query()->firstOrCreate(['name' => Str::squish($validated['team']), 'sport' => $sport])->id
-                : null,
+            'subset' => $existingNames->spelling('subset', $validated['subset'] ?? null),
+            'team_id' => $team === null ? null : Team::query()->firstOrCreate(['name' => $team, 'sport' => $sport])->id,
         ]);
 
         if (array_key_exists('players', $validated)) {
             /** @var list<string> $players */
             $players = $validated['players'] ?? [];
 
-            $card->players()->sync(collect($players)
-                ->map(fn (string $name): string => Str::squish($name))
-                ->filter()
-                ->unique()
+            $card->players()->sync(collect($existingNames->playerList(implode(' / ', $players), $sport->value))
                 ->map(fn (string $name): int => Player::query()->firstOrCreate(['name' => $name, 'sport' => $sport])->id)
                 ->all());
         }

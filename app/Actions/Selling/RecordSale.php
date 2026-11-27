@@ -7,6 +7,7 @@ use App\Enums\ItemStatus;
 use App\Models\CollectionItem;
 use App\Models\Sale;
 use App\Models\User;
+use App\Support\ExistingNames;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -14,13 +15,19 @@ use Illuminate\Support\Facades\DB;
  */
 class RecordSale
 {
+    public function __construct(private ExistingNames $existingNames) {}
+
     /**
      * @param  array{platform: string, sold_on: string, sale_price: int, fees: int, shipping_cost: int, buyer?: string|null, external_order_id?: string|null, notes?: string|null}  $data  Money in cents.
      */
     public function handle(User $user, CollectionItem $item, array $data): Sale
     {
         return DB::transaction(function () use ($user, $item, $data): Sale {
-            $sale = $user->sales()->create([...$data, 'collection_item_id' => $item->id]);
+            $sale = $user->sales()->create([
+                ...$data,
+                'buyer' => $this->existingNames->spelling('buyer', $data['buyer'] ?? null),
+                'collection_item_id' => $item->id,
+            ]);
 
             $item->update(['status' => ItemStatus::Sold]);
 

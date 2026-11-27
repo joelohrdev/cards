@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
  * @property int $card_set_id
  * @property string $name
  * @property int|null $print_run
+ * @property-read int $collection_items_count
  */
 #[Fillable(['card_set_id', 'name', 'print_run'])]
 class Parallel extends Model
@@ -36,5 +38,13 @@ class Parallel extends Model
     public function cardSet(): BelongsTo
     {
         return $this->belongsTo(CardSet::class);
+    }
+
+    /**
+     * @return HasMany<CollectionItem, $this>
+     */
+    public function collectionItems(): HasMany
+    {
+        return $this->hasMany(CollectionItem::class);
     }
 }

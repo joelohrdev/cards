@@ -7,6 +7,7 @@ use App\Enums\GradingStatus;
 use App\Models\CollectionItem;
 use App\Models\GradingSubmission;
 use App\Models\User;
+use App\Support\ExistingNames;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -19,6 +20,7 @@ class PlaceNewItemsInGrading
     public function __construct(
         private AddItemsToGradingSubmission $addItems,
         private SyncGradingItemStatuses $syncStatuses,
+        private ExistingNames $existingNames,
     ) {}
 
     /**
@@ -48,7 +50,7 @@ class PlaceNewItemsInGrading
 
         $submission = $user->gradingSubmissions()->make([
             'grader' => Grader::from($grading['grader'] ?? ''),
-            'service_level' => $grading['service_level'] ?? null,
+            'service_level' => $this->existingNames->spelling('service_level', $grading['service_level'] ?? null),
             'status' => $sent ? ($grading['status'] ?? GradingStatus::Submitted->value) : GradingStatus::Preparing->value,
             'submitted_on' => $sent ? ($grading['submitted_on'] ?? null) : null,
         ]);

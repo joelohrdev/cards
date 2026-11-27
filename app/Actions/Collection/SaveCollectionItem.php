@@ -13,6 +13,7 @@ use App\Models\Parallel;
 use App\Models\Tag;
 use App\Models\User;
 use App\Models\WantListEntry;
+use App\Support\ExistingNames;
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -27,6 +28,7 @@ class SaveCollectionItem
     public function __construct(
         private ResolveCardSet $resolveCardSet,
         private ResolveCard $resolveCard,
+        private ExistingNames $existingNames,
     ) {}
 
     /**
@@ -55,7 +57,7 @@ class SaveCollectionItem
                 'raw_condition' => $isGraded ? null : ($data['raw_condition'] ?? null),
                 'purchase_price' => Money::toCents($data['purchase_price'] ?? null),
                 'purchase_date' => $data['purchase_date'] ?? null,
-                'purchase_source' => $data['purchase_source'] ?? null,
+                'purchase_source' => $this->existingNames->spelling('purchase_source', $data['purchase_source'] ?? null),
                 'storage_location_id' => $data['storage_location_id'] ?? null,
                 'storage_position' => $data['storage_position'] ?? null,
                 'notes' => $data['notes'] ?? null,
@@ -127,6 +129,12 @@ class SaveCollectionItem
         }
 
         if (filled($data['parallel_name'] ?? null)) {
+            $existing = $this->existingNames->parallel($card->card_set_id, $data['parallel_name']);
+
+            if ($existing !== null) {
+                return $existing;
+            }
+
             return Parallel::query()->firstOrCreate(
                 ['card_set_id' => $card->card_set_id, 'name' => Str::squish($data['parallel_name'])],
                 ['print_run' => $data['parallel_print_run'] ?? null],
@@ -143,9 +151,9 @@ class SaveCollectionItem
     public function resolveTagIds(User $user, array $names): array
     {
         return array_values(collect($names)
-            ->map(fn (string $name): string => Str::squish($name))
+            ->map(fn (string $name): ?string => $this->existingNames->spelling('tag', $name))
             ->filter()
-            ->unique(fn (string $name): string => Str::lower($name))
+            ->unique(fn (string $name): string => ExistingNames::key($name))
             ->map(fn (string $name): int => Tag::query()->firstOrCreate(
                 ['name' => $name],
                 ['user_id' => $user->id, 'color' => Tag::COLORS[crc32(Str::lower($name)) % count(Tag::COLORS)]],

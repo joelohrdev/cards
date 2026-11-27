@@ -7,7 +7,7 @@ use App\Http\Resources\CardSetResource;
 use App\Services\CardIdentification\CardIdentificationFailed;
 use App\Services\CardIdentification\CardIdentifier;
 use App\Services\CardIdentification\CatalogMatcher;
-use App\Services\CardIdentification\ExistingNameMatcher;
+use App\Support\ExistingNames;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,7 +27,7 @@ class PhotoIdentificationController extends Controller
     /**
      * 200 {suggestion: PhotoSuggestion}; 422/429/502/503 {message} explain what to do next.
      */
-    public function store(Request $request, CardIdentifier $identifier, CatalogMatcher $matcher, ExistingNameMatcher $existingNames): JsonResponse
+    public function store(Request $request, CardIdentifier $identifier, CatalogMatcher $matcher, ExistingNames $existingNames): JsonResponse
     {
         if (! $identifier->isConfigured()) {
             return response()->json(['message' => 'Photo identification isn’t set up yet. Add an Anthropic API key as ANTHROPIC_API_KEY in the .env file to turn it on.'], 503);
@@ -51,8 +51,8 @@ class PhotoIdentificationController extends Controller
         }
 
         $suggestion['name'] = $existingNames->players($suggestion['name'], $suggestion['sport']);
-        $suggestion['team'] = $existingNames->team($suggestion['team'], $suggestion['sport']);
-        $suggestion['manufacturer'] = $existingNames->manufacturer($suggestion['manufacturer']);
+        $suggestion['team'] = $existingNames->spelling('team', $suggestion['team'], $suggestion['sport']);
+        $suggestion['manufacturer'] = $existingNames->spelling('manufacturer', $suggestion['manufacturer']);
         $set = $existingNames->set($suggestion['set_name'], $suggestion['year'], $suggestion['manufacturer'], $suggestion['sport']);
         $suggestion['set_name'] = $set->name ?? $existingNames->setName($suggestion['set_name'], $suggestion['manufacturer']);
 

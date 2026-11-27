@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Organize;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tag;
+use App\Support\ExistingNames;
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -42,7 +44,7 @@ class TagController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:50', Rule::unique('tags')],
+            'name' => ['required', 'string', 'max:50', self::notAnExistingTag(null)],
             'color' => ['required', Rule::in(Tag::COLORS)],
         ]);
 
@@ -59,7 +61,7 @@ class TagController extends Controller
     public function update(Request $request, Tag $tag): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:50', Rule::unique('tags')->ignore($tag->id)],
+            'name' => ['required', 'string', 'max:50', self::notAnExistingTag($tag)],
             'color' => ['required', Rule::in(Tag::COLORS)],
         ]);
 
@@ -80,5 +82,23 @@ class TagController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Tag deleted.']);
 
         return back();
+    }
+
+    /**
+     * A tag name that isn't already a tag apart from capitals, spaces or punctuation.
+     */
+    private static function notAnExistingTag(?Tag $except): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($except): void {
+            $key = ExistingNames::key((string) $value);
+            $existing = Tag::query()
+                ->when($except, fn ($query, Tag $tag) => $query->whereKeyNot($tag->id))
+                ->get(['id', 'name'])
+                ->first(fn (Tag $tag): bool => ExistingNames::key($tag->name) === $key);
+
+            if ($existing !== null) {
+                $fail("There’s already a “{$existing->name}” tag.");
+            }
+        };
     }
 }

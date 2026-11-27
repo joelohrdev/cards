@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Catalog;
 
 use App\Actions\Catalog\ResolveCard;
+use App\Actions\Catalog\ResolveCardSet;
 use App\Enums\ItemStatus;
 use App\Enums\Sport;
 use App\Http\Controllers\Controller;
@@ -11,7 +12,6 @@ use App\Http\Resources\CardSetResource;
 use App\Models\Card;
 use App\Models\CardSet;
 use App\Models\CollectionItem;
-use App\Models\Manufacturer;
 use App\Models\WantListEntry;
 use App\Support\ChecklistParser;
 use App\Support\FormOptions;
@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -83,19 +84,19 @@ class CardSetController extends Controller
     /**
      * Create a set, optionally with a pasted checklist.
      */
-    public function store(CardSetRequest $request, ChecklistParser $parser, ResolveCard $resolveCard): RedirectResponse
+    public function store(CardSetRequest $request, ChecklistParser $parser, ResolveCard $resolveCard, ResolveCardSet $resolveCardSet): RedirectResponse
     {
         $data = $request->validated();
 
-        $set = DB::transaction(function () use ($data, $parser, $resolveCard): CardSet {
-            $set = CardSet::query()->firstOrCreate([
-                'sport' => $data['sport'],
-                'year' => $data['year'],
-                'name' => trim($data['name']),
-                'manufacturer_id' => filled($data['manufacturer'] ?? null)
-                    ? Manufacturer::query()->firstOrCreate(['name' => trim($data['manufacturer'])])->id
-                    : null,
-            ], collect($data)->only(['season', 'card_count', 'notes'])->all());
+        $set = DB::transaction(function () use ($data, $parser, $resolveCard, $resolveCardSet): CardSet {
+            $set = $resolveCardSet->handle(
+                Sport::from($data['sport']),
+                (int) $data['year'],
+                $data['manufacturer'] ?? null,
+                $data['name'],
+                $data['season'] ?? null,
+                collect($data)->only(['card_count', 'notes'])->all(),
+            );
 
             foreach ($parser->parse($data['checklist'] ?? '') as $card) {
                 $resolveCard->handle($set, $card);
@@ -164,15 +165,14 @@ class CardSetController extends Controller
     /**
      * Update a set's details.
      */
-    public function update(CardSetRequest $request, CardSet $set): RedirectResponse
+    public function update(CardSetRequest $request, CardSet $set, ResolveCardSet $resolveCardSet): RedirectResponse
     {
         $data = $request->validated();
 
         $set->update([
             ...collect($data)->except(['manufacturer', 'checklist'])->all(),
-            'manufacturer_id' => filled($data['manufacturer'] ?? null)
-                ? Manufacturer::query()->firstOrCreate(['name' => trim($data['manufacturer'])])->id
-                : null,
+            'name' => Str::squish($data['name']),
+            'manufacturer_id' => $resolveCardSet->manufacturer($data['manufacturer'] ?? null)?->id,
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Set updated.']);

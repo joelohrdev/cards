@@ -13,6 +13,7 @@ use App\Http\Requests\Selling\GradingSubmissionRequest;
 use App\Http\Resources\CollectionItemResource;
 use App\Models\CollectionItem;
 use App\Models\GradingSubmission;
+use App\Support\ExistingNames;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -67,13 +68,14 @@ class GradingSubmissionController extends Controller
     /**
      * Start a submission, optionally with cards already in it.
      */
-    public function store(GradingSubmissionRequest $request, AddItemsToGradingSubmission $addItems, SyncGradingItemStatuses $syncStatuses): RedirectResponse
+    public function store(GradingSubmissionRequest $request, AddItemsToGradingSubmission $addItems, SyncGradingItemStatuses $syncStatuses, ExistingNames $existingNames): RedirectResponse
     {
         $validated = $request->validated();
 
-        $submission = DB::transaction(function () use ($request, $validated, $addItems, $syncStatuses): GradingSubmission {
+        $submission = DB::transaction(function () use ($request, $validated, $addItems, $syncStatuses, $existingNames): GradingSubmission {
             $submission = $request->user()->gradingSubmissions()->make([
                 ...collect($validated)->except('collection_item_ids')->all(),
+                'service_level' => $existingNames->spelling('service_level', $validated['service_level'] ?? null),
                 'status' => $validated['status'] ?? GradingStatus::Preparing->value,
                 'shipping_cost' => Money::toCents($validated['shipping_cost'] ?? null) ?? 0,
             ]);
@@ -148,11 +150,12 @@ class GradingSubmissionController extends Controller
     /**
      * Update a submission's details and status. Its cards follow the status.
      */
-    public function update(GradingSubmissionRequest $request, GradingSubmission $submission, SyncGradingItemStatuses $syncStatuses): RedirectResponse
+    public function update(GradingSubmissionRequest $request, GradingSubmission $submission, SyncGradingItemStatuses $syncStatuses, ExistingNames $existingNames): RedirectResponse
     {
         $validated = $request->validated();
         $attributes = [
             ...$validated,
+            'service_level' => $existingNames->spelling('service_level', $validated['service_level'] ?? null),
             'shipping_cost' => Money::toCents($validated['shipping_cost'] ?? null) ?? 0,
         ];
 

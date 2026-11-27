@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\CardSet;
 use App\Models\CollectionItem;
+use App\Models\Parallel;
 use App\Models\Player;
 use App\Models\Tag;
 use App\Models\User;
@@ -19,11 +21,11 @@ test('values already used are suggested, starting-with matches first, then the m
     $this->actingAs($user)
         ->getJson(route('suggestions', ['field' => 'purchase_source', 'q' => 'SHOW']))
         ->assertOk()
-        ->assertExactJson(['suggestions' => ['Showcase Cards', 'Card show']]);
+        ->assertExactJson(['suggestions' => ['Showcase Cards', 'Card show'], 'close' => []]);
 
     $this->actingAs($user)
         ->getJson(route('suggestions', 'purchase_source'))
-        ->assertExactJson(['suggestions' => ['Card show', 'eBay', 'Showcase Cards']]);
+        ->assertExactJson(['suggestions' => ['Card show', 'eBay', 'Showcase Cards'], 'close' => []]);
 });
 
 test('tags are suggested from every user’s tags', function () {
@@ -32,7 +34,7 @@ test('tags are suggested from every user’s tags', function () {
 
     $this->actingAs(User::factory()->create())
         ->getJson(route('suggestions', ['field' => 'tag', 'q' => 'fl']))
-        ->assertExactJson(['suggestions' => ['Flip']]);
+        ->assertExactJson(['suggestions' => ['Flip'], 'close' => []]);
 });
 
 test('players already in the catalog are suggested', function () {
@@ -41,7 +43,33 @@ test('players already in the catalog are suggested', function () {
 
     $this->actingAs(User::factory()->create())
         ->getJson(route('suggestions', ['field' => 'player', 'q' => 'pip']))
-        ->assertExactJson(['suggestions' => ['Scottie Pippen']]);
+        ->assertExactJson(['suggestions' => ['Scottie Pippen'], 'close' => []]);
+});
+
+test('a set’s own parallels are suggested', function () {
+    $set = CardSet::factory()->create();
+    Parallel::factory()->for($set)->create(['name' => 'Gold Refractor']);
+    Parallel::factory()->for($set)->create(['name' => 'Refractor']);
+    Parallel::factory()->for(CardSet::factory())->create(['name' => 'Red Refractor']);
+
+    $this->actingAs(User::factory()->create())
+        ->getJson(route('suggestions', ['field' => 'parallel', 'set' => $set->id, 'q' => 'refr']))
+        ->assertExactJson(['suggestions' => ['Refractor', 'Gold Refractor'], 'close' => []]);
+});
+
+test('a likely typo gets “did you mean” suggestions when nothing matches', function () {
+    Player::factory()->create(['name' => 'Ken Griffey Jr.']);
+    Player::factory()->create(['name' => 'Josh Bell']);
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->getJson(route('suggestions', ['field' => 'player', 'q' => 'Ken Griffy Jr']))
+        ->assertExactJson(['suggestions' => [], 'close' => ['Ken Griffey Jr.']]);
+
+    $this->actingAs($user)
+        ->getJson(route('suggestions', ['field' => 'player', 'q' => 'Josh Hall']))
+        ->assertExactJson(['suggestions' => [], 'close' => []]);
 });
 
 test('only known fields can be looked up', function () {

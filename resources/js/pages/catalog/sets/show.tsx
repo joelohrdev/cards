@@ -497,7 +497,9 @@ export default function SetShow({ set, cards: checklist, options }: Props) {
                     >
                         {({ errors, processing }) => (
                             <>
-                                <Input
+                                <SuggestInput
+                                    field="parallel"
+                                    setId={set.id}
                                     name="name"
                                     placeholder="Gold"
                                     aria-label="Parallel name"

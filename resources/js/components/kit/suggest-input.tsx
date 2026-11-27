@@ -1,14 +1,16 @@
 import { Plus } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { controlClass } from '@/components/kit/field';
 import { useLookup } from '@/hooks/use-lookup';
 import { cn } from '@/lib/utils';
 import { suggestions as suggestionsRoute } from '@/routes';
 
 /**
- * Free-text fields that work like categories. Keep in step with SuggestionController::FIELDS.
+ * Free-text fields that work like categories. Keep in step with ExistingNames::FIELDS
+ * (plus "parallel", which needs a set).
  */
 export type SuggestionField =
+    | 'parallel'
     | 'tag'
     | 'purchase_source'
     | 'manufacturer'
@@ -24,6 +26,10 @@ type Props = Omit<
     'value' | 'defaultValue' | 'onChange'
 > & {
     field: SuggestionField;
+    /** For "parallel": the set whose parallels to suggest. */
+    setId?: number | null;
+    /** Prefer this sport's spelling in "Did you mean…?" (players, teams). */
+    sport?: string | null;
     /** Controlled value; leave out (with `defaultValue`) inside an uncontrolled <Form>. */
     value?: string;
     defaultValue?: string | null;
@@ -48,6 +54,8 @@ type Props = Omit<
  */
 export function SuggestInput({
     field,
+    setId = null,
+    sport = null,
     value: controlledValue,
     defaultValue,
     onChange,
@@ -62,10 +70,25 @@ export function SuggestInput({
     ...inputProps
 }: Props) {
     const listId = useId();
+    const input = useRef<HTMLInputElement>(null);
     const [ownValue, setOwnValue] = useState(defaultValue ?? '');
     const [open, setOpen] = useState(false);
     const [highlighted, setHighlighted] = useState(-1);
     const value = controlledValue ?? ownValue;
+
+    // Inside an uncontrolled <Form> that resets after saving, clear along with it.
+    useEffect(() => {
+        const form = input.current?.form;
+
+        if (!form || controlledValue !== undefined) {
+            return;
+        }
+
+        const reset = () => setOwnValue(defaultValue ?? '');
+        form.addEventListener('reset', reset);
+
+        return () => form.removeEventListener('reset', reset);
+    }, [controlledValue, defaultValue]);
 
     const parts = separator ? value.split(separator) : [value];
     const earlier = parts
@@ -75,18 +98,30 @@ export function SuggestInput({
     const typed = (parts[parts.length - 1] ?? '').trim();
     const glue = separator === ',' ? ', ' : ` ${separator} `;
 
-    const { data } = useLookup<{ suggestions: string[] }>(
-        open ? suggestionsRoute.url(field, { query: { q: typed } }) : null,
+    const { data } = useLookup<{ suggestions: string[]; close: string[] }>(
+        open && (field !== 'parallel' || setId !== null)
+            ? suggestionsRoute.url(field, {
+                  query: {
+                      q: typed,
+                      ...(setId !== null ? { set: setId } : {}),
+                      ...(sport ? { sport } : {}),
+                  },
+              })
+            : null,
         120,
     );
 
     const excluded = new Set(
         [...exclude, ...earlier].map((entry) => entry.toLowerCase()),
     );
-    const options = (data?.suggestions ?? []).filter(
+    const matches = (data?.suggestions ?? []).filter(
         (option) => !excluded.has(option.toLowerCase()),
     );
-    const exactMatch = options.find(
+    const nearMisses = (data?.close ?? []).filter(
+        (option) => !excluded.has(option.toLowerCase()),
+    );
+    const options = [...matches, ...nearMisses];
+    const exactMatch = matches.find(
         (option) => option.toLowerCase() === typed.toLowerCase(),
     );
     const isNew = typed !== '' && exactMatch === undefined;
@@ -169,6 +204,7 @@ export function SuggestInput({
         <div className={cn('relative', bare ? 'min-w-32 flex-1' : 'w-full')}>
             <input
                 {...inputProps}
+                ref={input}
                 value={value}
                 autoComplete="off"
                 role="combobox"
@@ -226,9 +262,22 @@ export function SuggestInput({
                             className={cn(
                                 'cursor-pointer rounded-sm px-2 py-2',
                                 index === highlighted && 'bg-accent',
+                                index === matches.length &&
+                                    index > 0 &&
+                                    'mt-1 border-t',
                             )}
                         >
-                            <Highlight text={option} typed={typed} />
+                            {index < matches.length ? (
+                                <Highlight text={option} typed={typed} />
+                            ) : (
+                                <span>
+                                    Did you mean{' '}
+                                    <strong className="font-semibold">
+                                        {option}
+                                    </strong>
+                                    ?
+                                </span>
+                            )}
                         </li>
                     ))}
                     {isNew && (

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('suggestions/{field}', SuggestionController::class)
-        ->whereIn('field', array_keys(SuggestionController::FIELDS))
+        ->whereIn('field', SuggestionController::fields())
         ->name('suggestions');
     Route::get('imports', [ImportController::class, 'index'])->name('imports.index');
     Route::post('imports', [ImportController::class, 'store'])->name('imports.store');

@@ -6,13 +6,17 @@ use App\Models\Card;
 use App\Models\CardSet;
 use App\Models\Player;
 use App\Models\Team;
+use App\Support\ExistingNames;
 use Illuminate\Support\Str;
 
 /**
- * Find or create a checklist card in a set, filling in any details provided.
+ * Find or create a checklist card in a set, filling in any details provided. Players, team and
+ * subset take the existing spelling when they match one apart from capitals or punctuation.
  */
 class ResolveCard
 {
+    public function __construct(private ExistingNames $existingNames) {}
+
     /**
      * @param  array{
      *     number: string,
@@ -35,25 +39,25 @@ class ResolveCard
             'number' => $number,
         ]);
 
-        $players = collect($attributes['players'] ?? [])
-            ->when(
-                ! $card->exists && blank($attributes['players'] ?? null) && filled($attributes['name'] ?? null),
-                fn ($names) => collect(preg_split('/\s*(?:\/|&)\s*/', (string) ($attributes['name'] ?? '')) ?: []),
-            )
-            ->map(fn (string $name): string => Str::squish($name))
-            ->filter()
-            ->unique()
-            ->values();
+        $sport = $cardSet->sport->value;
+        $playersFromName = ! $card->exists && blank($attributes['players'] ?? null) && filled($attributes['name'] ?? null);
+        $players = collect($playersFromName
+            ? $this->existingNames->playerList($attributes['name'] ?? null, $sport)
+            : $this->existingNames->playerList(implode(' / ', $attributes['players'] ?? []), $sport));
 
         $name = $attributes['name'] ?? null;
-        $card->name = filled($name) ? Str::squish($name) : ($card->name ?? $players->implode(' / '));
+        $card->name = match (true) {
+            $playersFromName && $players->isNotEmpty() => $players->implode(' / '),
+            filled($name) => Str::squish((string) $name),
+            default => $card->name ?? $players->implode(' / '),
+        };
 
         if (blank($card->name)) {
             $card->name = 'Card #'.$number;
         }
 
         if (filled($attributes['subset'] ?? null)) {
-            $card->subset = Str::squish((string) $attributes['subset']);
+            $card->subset = $this->existingNames->spelling('subset', (string) $attributes['subset']);
         }
 
         if (filled($attributes['print_run'] ?? null)) {
@@ -68,7 +72,7 @@ class ResolveCard
 
         if (filled($attributes['team'] ?? null)) {
             $card->team_id = Team::query()->firstOrCreate([
-                'name' => Str::squish((string) $attributes['team']),
+                'name' => $this->existingNames->spelling('team', (string) $attributes['team'], $sport),
                 'sport' => $cardSet->sport,
             ])->id;
         }

@@ -479,13 +479,23 @@ const sections: Section[] = [
         id: 'account',
         title: 'Your account',
         body: (
-            <p>
-                Change your name, email and password from the settings menu. New
-                accounts can’t be created from the sign-in page: an admin
-                invites people from Settings → Users, and the emailed link lets
-                them set a password. Admins can also make someone an admin or
-                remove them; the cards they added stay.
-            </p>
+            <>
+                <p>
+                    Change your name, email and password from the settings menu.
+                    New accounts can’t be created from the sign-in page: an
+                    admin invites people from Settings → Users, and the emailed
+                    link lets them set a password. Admins can also make someone
+                    an admin or remove them; the cards they added stay.
+                </p>
+                <p>
+                    <strong>Keeping names consistent.</strong> When a name you
+                    enter matches one already in the app apart from capitals,
+                    punctuation or accents (“ken griffey jr” and “Ken Griffey
+                    Jr.”), the existing spelling is used. Admins can merge
+                    duplicates that are already there from Settings → Tidy up
+                    names.
+                </p>
+            </>
         ),
     },
 ];

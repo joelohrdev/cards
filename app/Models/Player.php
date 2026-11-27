@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int $id
  * @property string $name
  * @property Sport $sport
+ * @property-read int $cards_count
  */
 #[Fillable(['name', 'sport'])]
 class Player extends Model
