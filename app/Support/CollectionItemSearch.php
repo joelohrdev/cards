@@ -70,11 +70,37 @@ class CollectionItemSearch
             ->join('card_sets', 'card_sets.id', '=', 'cards.card_set_id')
             ->leftJoin('parallels', 'parallels.id', '=', 'collection_items.parallel_id');
 
-        $this->applyFreeText($builder);
+        $sticker = $this->stickerCode();
+
+        if ($sticker === null) {
+            $this->applyFreeText($builder);
+        } else {
+            // A sticker ID finds its card even when the same text would mean something else, like
+            // a year; that card is listed first.
+            $builder->where(fn (Builder $query) => $query
+                ->where('collection_items.sticker_code', $sticker)
+                ->orWhere(fn (Builder $freeText) => $this->applyFreeText($freeText)));
+            $builder->orderByRaw('case when collection_items.sticker_code = ? then 0 else 1 end', [$sticker]);
+        }
+
         $this->applyFilters($builder);
         $this->applySort($builder);
 
         return $builder;
+    }
+
+    /**
+     * The search as a sticker ID, when it's a single word that is one.
+     */
+    private function stickerCode(): ?string
+    {
+        $code = StickerCodes::normalize($this->query);
+
+        if ($code === null || str_contains($code, ' ')) {
+            return null;
+        }
+
+        return CollectionItem::query()->where('sticker_code', $code)->exists() ? $code : null;
     }
 
     /**

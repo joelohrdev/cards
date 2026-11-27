@@ -167,6 +167,12 @@ final class ImportFields
             'group' => 'Storage',
             'aliases' => ['position', 'slot', 'storageposition', 'pocket'],
         ],
+        'sticker_code' => [
+            'label' => 'Sticker ID',
+            'group' => 'Storage',
+            'hint' => 'The code on a sticker on the card. With a quantity, each copy gets the next number.',
+            'aliases' => ['sticker', 'stickerid', 'stickercode', 'label', 'labelid', 'inventoryid', 'inventorynumber', 'inventory', 'sku', 'customlabel', 'tag#', 'id#'],
+        ],
         'tags' => [
             'label' => 'Tags',
             'group' => 'Storage',

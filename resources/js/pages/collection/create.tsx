@@ -10,11 +10,13 @@ export default function CollectionCreate({
     prefillCard,
     gradingSubmissions,
     gradingStatuses,
+    nextStickerCode,
 }: {
     options: FormOptions;
     prefillCard: PickedCard | null;
     gradingSubmissions: OpenGradingSubmission[];
     gradingStatuses: Option[];
+    nextStickerCode: string | null;
 }) {
     return (
         <>
@@ -25,6 +27,7 @@ export default function CollectionCreate({
                 prefillCard={prefillCard}
                 gradingSubmissions={gradingSubmissions}
                 gradingStatuses={gradingStatuses}
+                nextStickerCode={nextStickerCode}
             />
         </>
     );

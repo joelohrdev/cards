@@ -50,6 +50,7 @@ class CollectionItemResource extends JsonResource
             'grader' => $this->grader?->value,
             'grade' => $this->grade,
             'cert_number' => $this->cert_number,
+            'sticker_code' => $this->sticker_code,
             'raw_condition' => $this->raw_condition?->value,
             'condition_label' => $this->conditionLabel(),
             'status' => $this->status->value,

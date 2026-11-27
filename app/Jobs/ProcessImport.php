@@ -10,6 +10,7 @@ use App\Support\Import\CsvReader;
 use App\Support\Import\ImportProgressConflict;
 use App\Support\Import\ImportRowMapper;
 use App\Support\Import\InvalidImportRow;
+use App\Support\StickerCodes;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -150,8 +151,10 @@ class ProcessImport implements ShouldQueue
         try {
             DB::transaction(function () use ($import, $mapper, $saveCollectionItem, $row): void {
                 ['data' => $data, 'quantity' => $quantity] = $mapper->map($row);
+                $stickerCodes = filled($data['sticker_code'] ?? null) ? StickerCodes::sequence($data['sticker_code'], $quantity) : [];
 
                 for ($copy = 0; $copy < $quantity; $copy++) {
+                    $data['sticker_code'] = $stickerCodes[$copy] ?? null;
                     $item = $saveCollectionItem->handle($import->user, $data);
                     $data['card_id'] = $item->card_id;
                     $data['parallel_id'] = $item->parallel_id;

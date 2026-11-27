@@ -69,6 +69,7 @@ type ItemFormData = {
     estimated_value: string;
     storage_location_id: string;
     storage_position: string;
+    sticker_code: string;
     notes: string;
     tags: string[];
     quantity: string;
@@ -99,6 +100,7 @@ export function ItemForm({
     prefillCard = null,
     gradingSubmissions = [],
     gradingStatuses = [],
+    nextStickerCode = null,
 }: {
     options: FormOptions;
     item?: CollectionItem;
@@ -106,6 +108,7 @@ export function ItemForm({
     prefillCard?: PickedCard | null;
     gradingSubmissions?: OpenGradingSubmission[];
     gradingStatuses?: Option[];
+    nextStickerCode?: string | null;
 }) {
     const editing = item !== undefined;
     const [mode, setMode] = useState<'existing' | 'new'>('existing');
@@ -138,6 +141,7 @@ export function ItemForm({
         estimated_value: dollarsInput(item?.estimated_value),
         storage_location_id: item?.location ? String(item.location.id) : '',
         storage_position: item?.storage_position ?? '',
+        sticker_code: item?.sticker_code ?? '',
         notes: item?.notes ?? '',
         tags: item?.tags?.map((tag) => tag.name) ?? [],
         quantity: '1',
@@ -327,10 +331,15 @@ export function ItemForm({
                             (page.props.gradingSubmissions ??
                                 []) as OpenGradingSubmission[],
                         );
+                        const usedSticker = data.sticker_code !== '';
+                        const nextSticker =
+                            (page.props.nextStickerCode as string | null) ?? '';
+
                         form.setData((current) => ({
                             ...current,
                             serial_number: '',
                             cert_number: '',
+                            sticker_code: usedSticker ? nextSticker : '',
                             grade: '',
                             notes: '',
                             photo: null,
@@ -789,6 +798,50 @@ export function ItemForm({
                                 }
                                 placeholder="Page 4, slot 7"
                             />
+                        </Field>
+                        <Field
+                            label="Sticker ID (optional)"
+                            htmlFor="sticker_code"
+                            error={errors.sticker_code}
+                            hint={
+                                Number(data.quantity) > 1 &&
+                                data.sticker_code !== ''
+                                    ? 'Each copy gets the next number.'
+                                    : 'The code on a sticker on the card or sleeve. Search for it to find this card.'
+                            }
+                        >
+                            <div className="flex gap-2">
+                                <Input
+                                    id="sticker_code"
+                                    value={data.sticker_code}
+                                    onChange={(event) =>
+                                        setData(
+                                            'sticker_code',
+                                            event.target.value.toUpperCase(),
+                                        )
+                                    }
+                                    autoComplete="off"
+                                    autoCapitalize="characters"
+                                    placeholder="A0042"
+                                    className="font-mono"
+                                />
+                                {!editing &&
+                                    nextStickerCode &&
+                                    data.sticker_code === '' && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() =>
+                                                setData(
+                                                    'sticker_code',
+                                                    nextStickerCode,
+                                                )
+                                            }
+                                        >
+                                            Use {nextStickerCode}
+                                        </Button>
+                                    )}
+                            </div>
                         </Field>
                     </div>
                 </Panel>

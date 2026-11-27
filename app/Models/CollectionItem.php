@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property Grader|null $grader
  * @property string|null $grade
  * @property string|null $cert_number
+ * @property string|null $sticker_code
  * @property RawCondition|null $raw_condition
  * @property ItemStatus $status
  * @property int|null $purchase_price
@@ -47,7 +48,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read Sale|null $sale
  */
 #[Fillable([
-    'card_id', 'parallel_id', 'serial_number', 'is_graded', 'grader', 'grade', 'cert_number',
+    'card_id', 'parallel_id', 'serial_number', 'is_graded', 'grader', 'grade', 'cert_number', 'sticker_code',
     'raw_condition', 'status', 'purchase_price', 'purchase_date', 'purchase_source',
     'estimated_value', 'value_updated_at', 'storage_location_id', 'storage_position', 'notes',
 ])]

@@ -10,6 +10,7 @@ use App\Enums\RawCondition;
 use App\Enums\Sport;
 use App\Models\Import;
 use App\Models\StorageLocation;
+use App\Support\StickerCodes;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -85,6 +86,7 @@ class ImportRowMapper
             'purchase_source' => ValueParser::text($cell('purchase_source')),
             'estimated_value' => ValueParser::money($cell('estimated_value'), 'value'),
             'storage_position' => ValueParser::text($cell('storage_position')),
+            'sticker_code' => StickerCodes::normalize(ValueParser::text($cell('sticker_code'))),
             'notes' => ValueParser::text($cell('notes')),
             'tags' => array_values(array_unique([
                 ...ValueParser::list($cell('tags')),
@@ -164,6 +166,7 @@ class ImportRowMapper
             'purchase_source' => ['nullable', 'string', 'max:150'],
             'estimated_value' => ['nullable', 'numeric', 'min:0', 'max:10000000'],
             'storage_position' => ['nullable', 'string', 'max:50'],
+            'sticker_code' => ['nullable', 'string', 'max:30', 'unique:collection_items,sticker_code'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'tags' => ['array', 'max:30'],
             'tags.*' => ['string', 'max:50'],
@@ -185,6 +188,7 @@ class ImportRowMapper
             'purchase_source' => 'purchased from',
             'estimated_value' => 'value',
             'storage_position' => 'position',
+            'sticker_code' => 'sticker ID',
             'tags.*' => 'tag',
         ]);
 

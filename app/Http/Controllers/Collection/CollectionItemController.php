@@ -20,6 +20,7 @@ use App\Models\ItemImage;
 use App\Models\PriceComp;
 use App\Support\CollectionItemSearch;
 use App\Support\FormOptions;
+use App\Support\StickerCodes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -118,6 +119,7 @@ class CollectionItemController extends Controller
                     'is_sent' => $submission->isWithGrader(),
                     'items_count' => $submission->collection_items_count,
                 ]),
+            'nextStickerCode' => StickerCodes::next(),
             'gradingStatuses' => array_values(array_filter(
                 GradingStatus::options(),
                 fn (array $option): bool => ! in_array($option['value'], [GradingStatus::Preparing->value, GradingStatus::Completed->value], true),
@@ -136,8 +138,10 @@ class CollectionItemController extends Controller
         $quantity = (int) ($data['quantity'] ?? 1);
         $item = null;
         $added = collect();
+        $stickerCodes = filled($data['sticker_code'] ?? null) ? StickerCodes::sequence($data['sticker_code'], $quantity) : [];
 
         for ($copy = 0; $copy < $quantity; $copy++) {
+            $data['sticker_code'] = $stickerCodes[$copy] ?? null;
             $item = $saveCollectionItem->handle($request->user(), $data);
             $added->push($item);
             $data['card_id'] = $item->card_id;

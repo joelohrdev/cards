@@ -405,6 +405,13 @@ export default function CollectionShow({
                                 {item.storage_position &&
                                     ` · ${item.storage_position}`}
                             </Detail>
+                            {item.sticker_code && (
+                                <Detail label="Sticker ID">
+                                    <span className="font-mono">
+                                        {item.sticker_code}
+                                    </span>
+                                </Detail>
+                            )}
                             <Detail label="Added">
                                 {shortDate(item.created_at)}
                             </Detail>

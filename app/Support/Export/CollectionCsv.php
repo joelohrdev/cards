@@ -22,7 +22,7 @@ final class CollectionCsv
     public const array HEADERS = [
         'ID', 'Year', 'Sport', 'Brand', 'Set', 'Card #', 'Name', 'Players', 'Team', 'Subset', 'Parallel',
         'Serial', 'Print run', 'RC', 'Auto', 'Relic', 'SP', 'Graded', 'Grader', 'Grade', 'Cert', 'Condition',
-        'Status', 'Paid', 'Value', 'Purchase date', 'Source', 'Location', 'Position', 'Tags', 'Notes', 'Created',
+        'Status', 'Paid', 'Value', 'Purchase date', 'Source', 'Location', 'Position', 'Sticker ID', 'Tags', 'Notes', 'Created',
     ];
 
     /**
@@ -92,6 +92,7 @@ final class CollectionCsv
             $item->purchase_source,
             $item->storage_location_id === null ? null : ($locationPaths[$item->storage_location_id] ?? null),
             $item->storage_position,
+            $item->sticker_code,
             $item->tags->map(fn (Tag $tag): string => $tag->name)->implode(', '),
             $item->notes,
             $item->created_at->toDateString(),

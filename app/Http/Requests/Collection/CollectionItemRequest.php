@@ -9,6 +9,7 @@ use App\Enums\ItemStatus;
 use App\Enums\RawCondition;
 use App\Enums\Sport;
 use App\Models\GradingSubmission;
+use App\Support\StickerCodes;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,6 +22,10 @@ class CollectionItemRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->normalizeMoneyInput($this, ['purchase_price', 'estimated_value']);
+
+        if ($this->has('sticker_code')) {
+            $this->merge(['sticker_code' => StickerCodes::normalize($this->input('sticker_code'))]);
+        }
     }
 
     /**
@@ -68,6 +73,17 @@ class CollectionItemRequest extends FormRequest
             'estimated_value' => ['nullable', 'numeric', 'min:0', 'max:10000000'],
             'storage_location_id' => ['nullable', 'integer', Rule::exists('storage_locations', 'id')],
             'storage_position' => ['nullable', 'string', 'max:50'],
+            'sticker_code' => [
+                'nullable',
+                'string',
+                'max:30',
+                Rule::unique('collection_items', 'sticker_code')->ignore($this->route('item')),
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if ((int) $this->input('quantity', 1) > 1 && preg_match('/\d$/', (string) $value) !== 1) {
+                        $fail('To give several copies their own stickers, use an ID ending in a number, like A0041.');
+                    }
+                },
+            ],
             'notes' => ['nullable', 'string', 'max:5000'],
             'tags' => ['nullable', 'array', 'max:30'],
             'tags.*' => ['string', 'max:50'],
@@ -107,6 +123,7 @@ class CollectionItemRequest extends FormRequest
     {
         return [
             'card.required' => 'Choose a card from the catalog or enter a new one.',
+            'sticker_code.unique' => 'Another card already has that sticker ID.',
             'card.number.required_with' => 'Enter the card number.',
             'grading.prohibited' => 'Only raw cards you have on hand can be sent for grading.',
             'grading.grader.required' => 'Choose the grading company.',

@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\WantListEntry;
 use App\Support\ExistingNames;
 use App\Support\Money;
+use App\Support\StickerCodes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -62,6 +63,10 @@ class SaveCollectionItem
                 'storage_position' => $data['storage_position'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
+
+            if (array_key_exists('sticker_code', $data)) {
+                $item->sticker_code = StickerCodes::normalize($data['sticker_code']);
+            }
 
             if (filled($data['status'] ?? null)) {
                 $item->status = ItemStatus::from($data['status']);

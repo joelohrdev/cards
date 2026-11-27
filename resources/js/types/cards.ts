@@ -74,6 +74,7 @@ export type CollectionItem = {
     grader: string | null;
     grade: string | null;
     cert_number: string | null;
+    sticker_code: string | null;
     raw_condition: string | null;
     condition_label: string | null;
     status: string;
