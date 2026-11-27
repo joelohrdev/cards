@@ -78,13 +78,13 @@ export default function SetsCreate({ sports }: { sports: Option[] }) {
                                     </NativeSelect>
                                 </Field>
                                 <Field
-                                    label="Set name"
+                                    label="Set name (optional)"
                                     error={errors.name}
                                     className="sm:col-span-4"
+                                    hint="Leave blank for a set known by its brand, like 1986 Fleer."
                                 >
                                     <Input
                                         name="name"
-                                        required
                                         placeholder="Base, Chrome, Update, Prizm…"
                                     />
                                 </Field>

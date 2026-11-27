@@ -20,11 +20,21 @@ class CardSetRequest extends FormRequest
             'sport' => ['required', Rule::enum(Sport::class)],
             'year' => ['required', 'integer', 'between:1860,2100'],
             'season' => ['nullable', 'string', 'max:20'],
-            'manufacturer' => ['nullable', 'string', 'max:100'],
-            'name' => ['required', 'string', 'max:150'],
+            'manufacturer' => ['nullable', 'required_without:name', 'string', 'max:100'],
+            'name' => ['nullable', 'string', 'max:150'],
             'card_count' => ['nullable', 'integer', 'min:1', 'max:100000'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'checklist' => ['nullable', 'string', 'max:200000'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'manufacturer.required_without' => 'Enter a brand or a set name.',
         ];
     }
 }

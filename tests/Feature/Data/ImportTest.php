@@ -183,6 +183,20 @@ test('the mapping needs year, set and number columns plus a sport', function () 
     Queue::assertNothingPushed();
 });
 
+test('the mapping can use a brand column instead of a set name, but needs one of them', function () {
+    Queue::fake();
+    $user = User::factory()->create();
+    $import = Import::factory()->for($user)->create(['headers' => ['Year', 'Brand', 'Number']]);
+
+    $this->actingAs($user)
+        ->put(route('imports.update', $import), ['mapping' => ['year' => 0, 'number' => 2], 'defaults' => ['sport' => 'baseball']])
+        ->assertSessionHasErrors(['mapping.set' => 'Choose the column that holds the set name or the brand.']);
+
+    $this->actingAs($user)
+        ->put(route('imports.update', $import), ['mapping' => ['year' => 0, 'manufacturer' => 1, 'number' => 2], 'defaults' => ['sport' => 'baseball']])
+        ->assertSessionHasNoErrors();
+});
+
 test('the import job creates sets, cards and items and records failed rows', function () {
     $user = User::factory()->create();
     $import = startedImport($user);

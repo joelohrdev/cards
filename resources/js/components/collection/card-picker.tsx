@@ -282,9 +282,10 @@ export function CardPicker({
                                     />
                                 </Field>
                                 <Field
-                                    label="Set name"
+                                    label="Set name (optional)"
                                     error={errors['new_set.name']}
                                     className="sm:col-span-2"
+                                    hint="Leave blank for a set known by its brand, like 1986 Fleer."
                                 >
                                     <Input
                                         value={setDraft.name}

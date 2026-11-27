@@ -671,7 +671,10 @@ export default function SetShow({ set, cards: checklist, options }: Props) {
                                         ))}
                                     </NativeSelect>
                                 </Field>
-                                <Field label="Set name" error={errors.name}>
+                                <Field
+                                    label="Set name (optional)"
+                                    error={errors.name}
+                                >
                                     <Input
                                         name="name"
                                         defaultValue={set.name}

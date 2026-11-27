@@ -39,7 +39,7 @@ final class ImportFields
         'set' => [
             'label' => 'Set',
             'group' => 'Card',
-            'required' => true,
+            'hint' => 'Optional when there’s a brand column: “1986 Fleer” needs no set name.',
             'aliases' => ['set', 'setname', 'product', 'series', 'cardset'],
         ],
         'number' => [

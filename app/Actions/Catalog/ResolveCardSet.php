@@ -6,10 +6,12 @@ use App\Enums\Sport;
 use App\Models\CardSet;
 use App\Models\Manufacturer;
 use App\Support\ExistingNames;
+use Illuminate\Support\Str;
 
 /**
  * Find or create a set from loose descriptors such as those found in a spreadsheet row. A set
- * whose year, sport, brand and name match an existing one apart from spelling is that set.
+ * whose year, sport, brand and name match an existing one apart from spelling is that set. The
+ * name is optional when there's a brand: "1986 Fleer" is a set with an empty name.
  */
 class ResolveCardSet
 {
@@ -18,9 +20,11 @@ class ResolveCardSet
     /**
      * @param  array{season?: string|null, card_count?: int|null, notes?: string|null}  $details  Used only when the set is new.
      */
-    public function handle(Sport $sport, int $year, ?string $manufacturerName, string $setName, ?string $season = null, array $details = []): CardSet
+    public function handle(Sport $sport, int $year, ?string $manufacturerName, ?string $setName, ?string $season = null, array $details = []): CardSet
     {
         $manufacturer = $this->manufacturer($manufacturerName);
+        // A set can go by its brand alone ("1986 Fleer"); its name is then empty.
+        $setName = Str::squish((string) $setName);
 
         $existing = $this->existingNames->set($setName, $year, $manufacturer?->name, $sport->value);
 
@@ -32,7 +36,7 @@ class ResolveCardSet
             'sport' => $sport,
             'year' => $year,
             'manufacturer_id' => $manufacturer?->id,
-            'name' => $this->existingNames->setName($setName, $manufacturer?->name),
+            'name' => $setName === '' ? '' : (string) $this->existingNames->setName($setName, $manufacturer?->name),
         ], [
             'season' => $season,
             ...$details,

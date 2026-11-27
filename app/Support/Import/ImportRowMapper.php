@@ -46,7 +46,11 @@ class ImportRowMapper
         [$year, $season] = ValueParser::year($cell('year')) ?? throw new InvalidImportRow('Missing the year.');
         $sport = ValueParser::sport($cell('sport')) ?? Sport::tryFrom((string) ($defaults['sport'] ?? ''))
             ?? throw new InvalidImportRow('Missing the sport. Map a sport column or choose a default sport.');
-        $setName = ValueParser::text($cell('set')) ?? throw new InvalidImportRow('Missing the set name.');
+        $setName = ValueParser::text($cell('set'));
+
+        if ($setName === null && ValueParser::text($cell('manufacturer')) === null) {
+            throw new InvalidImportRow('Missing the set name and brand. A card needs at least one of them.');
+        }
         $number = ltrim((string) ValueParser::text($cell('number')), '# ');
 
         if ($number === '') {
@@ -145,10 +149,10 @@ class ImportRowMapper
      *
      * @throws InvalidImportRow
      */
-    private function validate(array $data, string $setName, ?string $manufacturer): void
+    private function validate(array $data, ?string $setName, ?string $manufacturer): void
     {
         $validator = Validator::make([...$data, 'set_name' => $setName, 'manufacturer' => $manufacturer], [
-            'set_name' => ['string', 'max:150'],
+            'set_name' => ['nullable', 'string', 'max:150'],
             'manufacturer' => ['nullable', 'string', 'max:100'],
             'card.number' => ['string', 'max:30'],
             'card.name' => ['nullable', 'string', 'max:200'],

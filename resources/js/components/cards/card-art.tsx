@@ -87,7 +87,7 @@ function CardBack({
             </p>
             <p className="line-clamp-1 text-sm text-muted-foreground">
                 {item.card.set.year} {item.card.set.manufacturer}{' '}
-                {item.card.set.name}
+                {item.card.set.name || item.card.set.manufacturer}
             </p>
         </div>
     );

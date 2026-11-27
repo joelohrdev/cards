@@ -93,7 +93,7 @@ class CardSetController extends Controller
                 Sport::from($data['sport']),
                 (int) $data['year'],
                 $data['manufacturer'] ?? null,
-                $data['name'],
+                $data['name'] ?? null,
                 $data['season'] ?? null,
                 collect($data)->only(['card_count', 'notes'])->all(),
             );
@@ -171,7 +171,7 @@ class CardSetController extends Controller
 
         $set->update([
             ...collect($data)->except(['manufacturer', 'checklist'])->all(),
-            'name' => Str::squish($data['name']),
+            'name' => Str::squish((string) ($data['name'] ?? '')),
             'manufacturer_id' => $resolveCardSet->manufacturer($data['manufacturer'] ?? null)?->id,
         ]);
 

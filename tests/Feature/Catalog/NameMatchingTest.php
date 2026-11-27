@@ -117,3 +117,36 @@ test('buyer, comp source and grading service level take the existing spelling', 
         ->and(PriceComp::query()->pluck('source')->unique()->all())->toBe(['eBay'])
         ->and(Sale::query()->pluck('buyer')->unique()->all())->toBe(['Card Shop Joe']);
 });
+
+test('a set can go by its brand alone, but needs a brand or a name', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('sets.store'), ['sport' => 'baseball', 'year' => 1986])
+        ->assertSessionHasErrors(['manufacturer' => 'Enter a brand or a set name.']);
+
+    $this->actingAs($user)
+        ->post(route('sets.store'), ['sport' => 'baseball', 'year' => 1986, 'manufacturer' => 'Fleer'])
+        ->assertSessionHasNoErrors();
+
+    $fleer = CardSet::query()->where('year', 1986)->sole();
+    expect($fleer->name)->toBe('')
+        ->and($fleer->full_name)->toBe('1986 Fleer');
+
+    $this->actingAs($user)
+        ->post(route('collection.store'), [
+            'new_set' => ['sport' => 'baseball', 'year' => 1986, 'manufacturer' => 'fleer'],
+            'card' => ['number' => '57', 'name' => 'Michael Jordan'],
+        ])
+        ->assertSessionHasNoErrors();
+
+    $this->actingAs($user)
+        ->post(route('collection.store'), [
+            'new_set' => ['sport' => 'baseball', 'year' => 1987],
+            'card' => ['number' => '1', 'name' => 'Someone'],
+        ])
+        ->assertSessionHasErrors(['new_set.manufacturer' => 'Enter a brand or a set name.']);
+
+    expect(CardSet::query()->where('year', 1986)->count())->toBe(1)
+        ->and(CollectionItem::query()->sole()->card->card_set_id)->toBe($fleer->id);
+});

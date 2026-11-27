@@ -40,7 +40,8 @@ class UpdateImportMappingRequest extends FormRequest
     }
 
     /**
-     * A sport must come from somewhere: a column or the default.
+     * A sport must come from somewhere (a column or the default), and a set needs a set name or
+     * brand column.
      *
      * @return array<int, callable(Validator): void>
      */
@@ -50,6 +51,10 @@ class UpdateImportMappingRequest extends FormRequest
             function (Validator $validator): void {
                 if ($this->input('mapping.sport') === null && blank($this->input('defaults.sport'))) {
                     $validator->errors()->add('defaults.sport', 'Choose a default sport, or map a sport column.');
+                }
+
+                if ($this->input('mapping.set') === null && $this->input('mapping.manufacturer') === null) {
+                    $validator->errors()->add('mapping.set', 'Choose the column that holds the set name or the brand.');
                 }
             },
         ];
@@ -62,7 +67,6 @@ class UpdateImportMappingRequest extends FormRequest
     {
         return [
             'mapping.year.required' => 'Choose the column that holds the year.',
-            'mapping.set.required' => 'Choose the column that holds the set name.',
             'mapping.number.required' => 'Choose the column that holds the card number.',
         ];
     }

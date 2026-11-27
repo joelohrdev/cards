@@ -110,7 +110,7 @@ class SaveCollectionItem
                 Sport::from($data['new_set']['sport']),
                 (int) $data['new_set']['year'],
                 $data['new_set']['manufacturer'] ?? null,
-                $data['new_set']['name'],
+                $data['new_set']['name'] ?? null,
             ),
             default => throw ValidationException::withMessages(['card_set_id' => 'Choose a set for this card.']),
         };
