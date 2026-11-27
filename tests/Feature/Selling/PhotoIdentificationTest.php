@@ -4,6 +4,7 @@ use App\Models\Card;
 use App\Models\CardSet;
 use App\Models\Manufacturer;
 use App\Models\Player;
+use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Client\Request;
 use Illuminate\Http\UploadedFile;
@@ -128,6 +129,27 @@ test('player names read from a photo take the spelling of players already in the
     'two players, one unknown' => ['KEN GRIFFEY JR. & Mike Trout', 'Ken Griffey Jr. / Mike Trout'],
     'no close match' => ['Ken Griffin', 'Ken Griffin'],
 ]);
+
+test('team and brand read from a photo take the spelling already in the app', function () {
+    Http::preventStrayRequests();
+    Http::fake(['api.anthropic.com/v1/messages' => Http::response(claudeReply(json_encode([
+        'sport' => 'baseball',
+        'manufacturer' => 'UPPERDECK',
+        'team' => 'seattle mariners',
+        'name' => 'Someone New',
+        'confidence' => 'high',
+    ])))]);
+
+    Manufacturer::factory()->create(['name' => 'Upper Deck']);
+    Team::factory()->create(['name' => 'Seattle Mariners', 'sport' => 'baseball']);
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('identify.photo.store'), ['photo' => UploadedFile::fake()->image('card.jpg')], ['Accept' => 'application/json'])
+        ->assertOk()
+        ->assertJsonPath('suggestion.manufacturer', 'Upper Deck')
+        ->assertJsonPath('suggestion.team', 'Seattle Mariners')
+        ->assertJsonPath('suggestion.name', 'Someone New');
+});
 
 test('malformed model output returns a retry message instead of a suggestion', function (string $text) {
     Http::preventStrayRequests();
