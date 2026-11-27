@@ -122,6 +122,98 @@ test('sending a submission puts its cards at grading and moving it back returns 
     expect($item->fresh()->status)->toBe(ItemStatus::Owned);
 });
 
+test('each step of a submission can be marked with one tap and fills in its date', function () {
+    $this->travelTo('2026-11-02');
+    $user = User::factory()->create();
+    $item = CollectionItem::factory()->for($user)->create();
+    $submission = submissionWith($user, [$item]);
+
+    $this->actingAs($user)->post(route('grading.progress.store', $submission), ['status' => 'submitted'])->assertSessionHasNoErrors();
+    expect($item->fresh()->status)->toBe(ItemStatus::AtGrading);
+
+    $this->travelTo('2026-11-06');
+    $this->actingAs($user)->post(route('grading.progress.store', $submission), ['status' => 'received'])->assertSessionHasNoErrors();
+    $this->actingAs($user)->post(route('grading.progress.store', $submission), ['status' => 'grading'])->assertSessionHasNoErrors();
+
+    $this->travelTo('2026-11-20');
+    $this->actingAs($user)->post(route('grading.progress.store', $submission), ['status' => 'shipped'])->assertSessionHasNoErrors();
+
+    $submission->refresh();
+    expect($submission->status)->toBe(GradingStatus::Shipped)
+        ->and($submission->submitted_on->toDateString())->toBe('2026-11-02')
+        ->and($submission->received_on->toDateString())->toBe('2026-11-06')
+        ->and($submission->shipped_back_on->toDateString())->toBe('2026-11-20');
+
+    $this->actingAs($user)
+        ->post(route('grading.progress.store', $submission), ['status' => 'completed'])
+        ->assertSessionHasErrors('status');
+});
+
+test('marking the next step twice doesn’t skip a step', function () {
+    $user = User::factory()->create();
+    $submission = submissionWith($user, [CollectionItem::factory()->for($user)->create()], attributes: ['status' => GradingStatus::Submitted]);
+
+    $this->actingAs($user)->post(route('grading.progress.store', $submission), ['status' => 'received']);
+    $this->actingAs($user)
+        ->post(route('grading.progress.store', $submission), ['status' => 'received'])
+        ->assertSessionHasErrors('status');
+
+    expect($submission->fresh()->status)->toBe(GradingStatus::Received);
+});
+
+test('a typed-in milestone date is kept when the status catches up', function () {
+    $user = User::factory()->create();
+    $submission = submissionWith($user, [CollectionItem::factory()->for($user)->create()], attributes: ['status' => GradingStatus::Submitted, 'submitted_on' => '2026-10-01']);
+
+    $this->actingAs($user)
+        ->patch(route('grading.update', $submission), ['grader' => 'PSA', 'status' => 'received', 'submitted_on' => '2026-10-01', 'received_on' => '2026-10-04'])
+        ->assertSessionHasNoErrors();
+
+    expect($submission->fresh()->received_on->toDateString())->toBe('2026-10-04');
+});
+
+test('shipments are saved with a link to the carrier’s tracking page', function () {
+    $this->travelTo('2026-11-27');
+    $user = User::factory()->create();
+    $submission = submissionWith($user, [CollectionItem::factory()->for($user)->create()]);
+
+    $this->actingAs($user)
+        ->patch(route('grading.update', $submission), [
+            'grader' => 'PSA',
+            'status' => 'shipped',
+            'submitted_on' => '2026-11-01',
+            'outbound_carrier' => 'usps',
+            'outbound_tracking' => '9400 1000',
+            'return_carrier' => 'other',
+            'return_tracking' => 'ABC123',
+        ])
+        ->assertSessionHasNoErrors();
+
+    $this->actingAs($user)
+        ->get(route('grading.show', $submission))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('submission.outbound.carrier_label', 'USPS')
+            ->where('submission.outbound.tracking_url', 'https://tools.usps.com/go/TrackConfirmAction?tLabels=9400%201000')
+            ->where('submission.return.tracking', 'ABC123')
+            ->where('submission.return.tracking_url', null)
+            ->where('submission.shipped_back_on', '2026-11-27')
+            ->where('submission.days_out', 26)
+            ->where('submission.next_action', null));
+});
+
+test('milestone dates can’t go backwards, and only filled-in dates are compared', function () {
+    $user = User::factory()->create();
+    $submission = GradingSubmission::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->patch(route('grading.update', $submission), ['grader' => 'PSA', 'submitted_on' => '2026-10-10', 'received_on' => '2026-10-05'])
+        ->assertSessionHasErrors('received_on');
+
+    $this->actingAs($user)
+        ->patch(route('grading.update', $submission), ['grader' => 'PSA', 'returned_on' => '2026-10-05'])
+        ->assertSessionHasNoErrors();
+});
+
 test('a submission can’t be completed through a status change', function () {
     $user = User::factory()->create();
     $submission = GradingSubmission::factory()->for($user)->create();

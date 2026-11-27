@@ -3,6 +3,7 @@
 use App\Http\Controllers\Selling\CertLookupController;
 use App\Http\Controllers\Selling\GradingItemController;
 use App\Http\Controllers\Selling\GradingLookupController;
+use App\Http\Controllers\Selling\GradingProgressController;
 use App\Http\Controllers\Selling\GradingResultController;
 use App\Http\Controllers\Selling\GradingSubmissionController;
 use App\Http\Controllers\Selling\PhotoIdentificationController;
@@ -19,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('grading/{submission}/items', [GradingItemController::class, 'store'])->name('grading.items.store');
     Route::patch('grading/{submission}/items/{item}', [GradingItemController::class, 'update'])->name('grading.items.update');
     Route::delete('grading/{submission}/items/{item}', [GradingItemController::class, 'destroy'])->name('grading.items.destroy');
+    Route::post('grading/{submission}/progress', [GradingProgressController::class, 'store'])->name('grading.progress.store');
     Route::post('grading/{submission}/results', [GradingResultController::class, 'store'])->name('grading.results.store');
 
     Route::get('sales', [SaleController::class, 'index'])->name('sales.index');

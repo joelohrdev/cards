@@ -1,17 +1,17 @@
-import { Form, Head, Link, router } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { CardThumb } from '@/components/cards/card-thumb';
-import { StatusPill } from '@/components/grading/status-pill';
+import { Form, Head, Link, router } from "@inertiajs/react";
+import { Check, ExternalLink, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { CardThumb } from "@/components/cards/card-thumb";
+import { StatusPill } from "@/components/grading/status-pill";
 import {
     Field,
     MoneyInput,
     NativeSelect,
     Textarea,
-} from '@/components/kit/field';
-import { PageHeader } from '@/components/kit/page-header';
-import { Panel } from '@/components/kit/panel';
-import { Button } from '@/components/ui/button';
+} from "@/components/kit/field";
+import { PageHeader } from "@/components/kit/page-header";
+import { Panel } from "@/components/kit/panel";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
@@ -19,15 +19,16 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
-import { useLookup } from '@/hooks/use-lookup';
-import { count, dollarsInput, money, shortDate } from '@/lib/format';
-import collection from '@/routes/collection';
-import grading from '@/routes/grading';
-import type { CollectionItem, Option } from '@/types';
-import type { SubmissionSummary } from './index';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { useLookup } from "@/hooks/use-lookup";
+import { count, dollarsInput, money, shortDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import collection from "@/routes/collection";
+import grading from "@/routes/grading";
+import type { CollectionItem, Option } from "@/types";
+import type { Shipment, SubmissionSummary } from "./index";
 
 type SubmissionItem = {
     item: CollectionItem;
@@ -42,10 +43,12 @@ type Props = {
         notes: string | null;
         is_completed: boolean;
         is_with_grader: boolean;
+        next_action: { status: string; label: string } | null;
     };
     items: SubmissionItem[];
     totals: { declared: number; fees: number; shipping: number };
     graders: Option[];
+    carriers: Option[];
     statuses: Option[];
 };
 
@@ -54,12 +57,14 @@ export default function GradingShow({
     items,
     totals,
     graders,
+    carriers,
     statuses,
 }: Props) {
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [advancing, setAdvancing] = useState(false);
     const title = [submission.grader, submission.service_level]
         .filter(Boolean)
-        .join(' · ');
+        .join(" · ");
 
     return (
         <>
@@ -85,19 +90,45 @@ export default function GradingShow({
                 }
                 description={
                     <span className="tabular">
-                        {count(items.length, 'card')} ·{' '}
+                        {count(items.length, "card")} ·{" "}
                         {money(totals.fees + totals.shipping)} in fees and
                         shipping
                         {submission.reference && ` · #${submission.reference}`}
                     </span>
                 }
                 actions={
-                    <Button
-                        variant="outline"
-                        onClick={() => setConfirmDelete(true)}
-                    >
-                        <Trash2 /> Delete
-                    </Button>
+                    <>
+                        <Button
+                            variant="outline"
+                            onClick={() => setConfirmDelete(true)}
+                        >
+                            <Trash2 /> Delete
+                        </Button>
+                        {submission.next_action && items.length > 0 && (
+                            <Button
+                                disabled={advancing}
+                                onClick={() =>
+                                    router.post(
+                                        grading.progress.store.url(
+                                            submission.id,
+                                        ),
+                                        {
+                                            status: submission.next_action
+                                                ?.status,
+                                        },
+                                        {
+                                            preserveScroll: true,
+                                            onStart: () => setAdvancing(true),
+                                            onFinish: () => setAdvancing(false),
+                                        },
+                                    )
+                                }
+                            >
+                                {advancing ? <Spinner /> : <Check />}
+                                {submission.next_action.label}
+                            </Button>
+                        )}
+                    </>
                 }
             />
 
@@ -120,11 +151,22 @@ export default function GradingShow({
                     )}
                 </div>
 
-                <DetailsPanel
-                    submission={submission}
-                    graders={graders}
-                    statuses={statuses}
-                />
+                <div className="space-y-6 self-start">
+                    <ProgressPanel submission={submission} />
+                    <DetailsPanel
+                        key={[
+                            submission.status,
+                            submission.submitted_on,
+                            submission.received_on,
+                            submission.shipped_back_on,
+                            submission.returned_on,
+                        ].join("|")}
+                        submission={submission}
+                        graders={graders}
+                        carriers={carriers}
+                        statuses={statuses}
+                    />
+                </div>
             </div>
 
             <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
@@ -132,11 +174,11 @@ export default function GradingShow({
                     <DialogHeader>
                         <DialogTitle>Delete this submission?</DialogTitle>
                         <DialogDescription>
-                            The cards stay in your collection.{' '}
+                            The cards stay in your collection.{" "}
                             {submission.is_with_grader &&
-                                'Cards marked “At grading” go back to “Owned”. '}
+                                "Cards marked “At grading” go back to “Owned”. "}
                             {submission.is_completed &&
-                                'Grades already recorded on the cards are kept.'}
+                                "Grades already recorded on the cards are kept."}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -163,17 +205,161 @@ export default function GradingShow({
     );
 }
 
+const MILESTONES: {
+    status: string;
+    label: string;
+    date: (submission: SubmissionSummary) => string | null;
+    shipment?: (submission: SubmissionSummary) => Shipment;
+}[] = [
+    {
+        status: "submitted",
+        label: "Sent to grader",
+        date: (submission) => submission.submitted_on,
+        shipment: (submission) => submission.outbound,
+    },
+    {
+        status: "received",
+        label: "Received by grader",
+        date: (submission) => submission.received_on,
+    },
+    { status: "grading", label: "Grading", date: () => null },
+    {
+        status: "shipped",
+        label: "Shipped back",
+        date: (submission) => submission.shipped_back_on,
+        shipment: (submission) => submission.return,
+    },
+    {
+        status: "completed",
+        label: "Back in hand",
+        date: (submission) => submission.returned_on,
+    },
+];
+
+const STATUS_ORDER = ["preparing", ...MILESTONES.map((step) => step.status)];
+
+/**
+ * Where the submission is: each milestone with its date and, for the two shipments,
+ * the carrier and a tracking link.
+ */
+function ProgressPanel({ submission }: { submission: Props["submission"] }) {
+    const reached = STATUS_ORDER.indexOf(submission.status);
+
+    return (
+        <Panel title="Progress">
+            <ol className="grid gap-3">
+                {MILESTONES.map((step, index) => {
+                    const done = reached >= index + 1;
+                    const current = reached === index + 1;
+                    const date = step.date(submission);
+                    const shipment = step.shipment?.(submission);
+
+                    return (
+                        <li key={step.status} className="flex gap-3">
+                            <span
+                                className={cn(
+                                    "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px]",
+                                    done
+                                        ? "border-primary bg-primary text-primary-foreground"
+                                        : "text-muted-foreground",
+                                )}
+                            >
+                                {done ? (
+                                    <Check className="size-3" />
+                                ) : (
+                                    index + 1
+                                )}
+                            </span>
+                            <div className="text-sm">
+                                <p
+                                    className={cn(
+                                        current && "font-medium",
+                                        !done && "text-muted-foreground",
+                                    )}
+                                >
+                                    {step.label}
+                                </p>
+                                {(date || shipment?.tracking) && (
+                                    <p className="text-xs text-muted-foreground">
+                                        {date && shortDate(date)}
+                                        {date && shipment?.tracking && " · "}
+                                        {shipment?.tracking && (
+                                            <TrackingNumber
+                                                shipment={shipment}
+                                            />
+                                        )}
+                                    </p>
+                                )}
+                            </div>
+                        </li>
+                    );
+                })}
+            </ol>
+            {submission.days_out !== null && (
+                <p className="mt-4 text-sm text-muted-foreground">
+                    Out for {count(submission.days_out, "day")}.
+                </p>
+            )}
+        </Panel>
+    );
+}
+
+function TrackingNumber({ shipment }: { shipment: Shipment }) {
+    const text = [shipment.carrier_label, shipment.tracking]
+        .filter(Boolean)
+        .join(" ");
+
+    if (!shipment.tracking_url) {
+        return <span>{text}</span>;
+    }
+
+    return (
+        <a
+            href={shipment.tracking_url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-primary hover:underline"
+        >
+            {text}
+            <ExternalLink className="size-3" />
+        </a>
+    );
+}
+
+function CarrierSelect({
+    id,
+    carriers,
+    defaultValue,
+}: {
+    id: string;
+    carriers: Option[];
+    defaultValue: string | null;
+}) {
+    return (
+        <NativeSelect id={id} name={id} defaultValue={defaultValue ?? ""}>
+            <option value="">—</option>
+            {carriers.map((carrier) => (
+                <option key={carrier.value} value={carrier.value}>
+                    {carrier.label}
+                </option>
+            ))}
+        </NativeSelect>
+    );
+}
+
 function DetailsPanel({
     submission,
     graders,
+    carriers,
     statuses,
 }: {
-    submission: Props['submission'];
+    submission: Props["submission"];
     graders: Option[];
+    carriers: Option[];
     statuses: Option[];
 }) {
     return (
-        <Panel title="Details" className="self-start">
+        <Panel title="Details">
             <Form
                 action={grading.update.url(submission.id)}
                 method="patch"
@@ -188,7 +374,7 @@ function DetailsPanel({
                                 {submission.returned_on &&
                                     ` on ${shortDate(submission.returned_on)}`}
                                 {submission.turnaround_days !== null &&
-                                    ` after ${count(submission.turnaround_days, 'day')}`}
+                                    ` after ${count(submission.turnaround_days, "day")}`}
                                 .
                             </p>
                         ) : (
@@ -244,7 +430,7 @@ function DetailsPanel({
                                     id="service_level"
                                     name="service_level"
                                     defaultValue={
-                                        submission.service_level ?? ''
+                                        submission.service_level ?? ""
                                     }
                                 />
                             </Field>
@@ -257,11 +443,87 @@ function DetailsPanel({
                                     id="submitted_on"
                                     type="date"
                                     name="submitted_on"
-                                    defaultValue={submission.submitted_on ?? ''}
+                                    defaultValue={submission.submitted_on ?? ""}
                                 />
                             </Field>
                             <Field
-                                label="Returned on"
+                                label="Shipped with"
+                                htmlFor="outbound_carrier"
+                                error={errors.outbound_carrier}
+                            >
+                                <CarrierSelect
+                                    id="outbound_carrier"
+                                    carriers={carriers}
+                                    defaultValue={submission.outbound.carrier}
+                                />
+                            </Field>
+                            <Field
+                                label="Tracking number"
+                                htmlFor="outbound_tracking"
+                                error={errors.outbound_tracking}
+                            >
+                                <Input
+                                    id="outbound_tracking"
+                                    name="outbound_tracking"
+                                    autoComplete="off"
+                                    defaultValue={
+                                        submission.outbound.tracking ?? ""
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                label="Grader received"
+                                htmlFor="received_on"
+                                error={errors.received_on}
+                            >
+                                <Input
+                                    id="received_on"
+                                    type="date"
+                                    name="received_on"
+                                    defaultValue={submission.received_on ?? ""}
+                                />
+                            </Field>
+                            <Field
+                                label="Shipped back"
+                                htmlFor="shipped_back_on"
+                                error={errors.shipped_back_on}
+                            >
+                                <Input
+                                    id="shipped_back_on"
+                                    type="date"
+                                    name="shipped_back_on"
+                                    defaultValue={
+                                        submission.shipped_back_on ?? ""
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                label="Return carrier"
+                                htmlFor="return_carrier"
+                                error={errors.return_carrier}
+                            >
+                                <CarrierSelect
+                                    id="return_carrier"
+                                    carriers={carriers}
+                                    defaultValue={submission.return.carrier}
+                                />
+                            </Field>
+                            <Field
+                                label="Return tracking"
+                                htmlFor="return_tracking"
+                                error={errors.return_tracking}
+                            >
+                                <Input
+                                    id="return_tracking"
+                                    name="return_tracking"
+                                    autoComplete="off"
+                                    defaultValue={
+                                        submission.return.tracking ?? ""
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                label="Back in hand"
                                 htmlFor="returned_on"
                                 error={errors.returned_on}
                             >
@@ -269,7 +531,7 @@ function DetailsPanel({
                                     id="returned_on"
                                     type="date"
                                     name="returned_on"
-                                    defaultValue={submission.returned_on ?? ''}
+                                    defaultValue={submission.returned_on ?? ""}
                                 />
                             </Field>
                             <Field
@@ -280,7 +542,7 @@ function DetailsPanel({
                                 <Input
                                     id="reference"
                                     name="reference"
-                                    defaultValue={submission.reference ?? ''}
+                                    defaultValue={submission.reference ?? ""}
                                 />
                             </Field>
                             <Field
@@ -305,7 +567,7 @@ function DetailsPanel({
                             <Textarea
                                 id="notes"
                                 name="notes"
-                                defaultValue={submission.notes ?? ''}
+                                defaultValue={submission.notes ?? ""}
                                 className="min-h-16"
                             />
                         </Field>
@@ -324,9 +586,9 @@ function CardsPanel({
     items,
     totals,
 }: {
-    submission: Props['submission'];
+    submission: Props["submission"];
     items: SubmissionItem[];
-    totals: Props['totals'];
+    totals: Props["totals"];
 }) {
     if (items.length === 0) {
         return (
@@ -389,10 +651,10 @@ function CardsPanel({
                                         <td className="px-4 py-2 font-medium">
                                             {entry.resulting_grade
                                                 ? `${submission.grader} ${entry.resulting_grade}`
-                                                : 'Not graded'}
+                                                : "Not graded"}
                                         </td>
                                         <td className="px-4 py-2 text-muted-foreground tabular">
-                                            {entry.resulting_cert_number ?? '—'}
+                                            {entry.resulting_cert_number ?? "—"}
                                         </td>
                                     </>
                                 ) : (
@@ -509,8 +771,8 @@ function ItemMoneyCells({
     );
 }
 
-function AddCardsPanel({ submission }: { submission: Props['submission'] }) {
-    const [query, setQuery] = useState('');
+function AddCardsPanel({ submission }: { submission: Props["submission"] }) {
+    const [query, setQuery] = useState("");
     const [adding, setAdding] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [refresh, setRefresh] = useState(0);
@@ -532,7 +794,7 @@ function AddCardsPanel({ submission }: { submission: Props['submission'] }) {
                 onError: (errors) =>
                     setError(
                         Object.values(errors)[0] ??
-                            'Couldn’t add that card. Try again.',
+                            "Couldn’t add that card. Try again.",
                     ),
                 onFinish: () => setAdding(null),
             },
@@ -557,8 +819,8 @@ function AddCardsPanel({ submission }: { submission: Props['submission'] }) {
                 ) : data && data.items.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                         {query
-                            ? 'No raw cards on hand match that search. Graded, sold, and already-submitted cards are left out.'
-                            : 'All your raw cards on hand are already in a submission, or you haven’t added any raw cards yet.'}
+                            ? "No raw cards on hand match that search. Graded, sold, and already-submitted cards are left out."
+                            : "All your raw cards on hand are already in a submission, or you haven’t added any raw cards yet."}
                     </p>
                 ) : (
                     <ul className="divide-y">
@@ -596,9 +858,9 @@ function ResultsPanel({
     items,
     totals,
 }: {
-    submission: Props['submission'];
+    submission: Props["submission"];
     items: SubmissionItem[];
-    totals: Props['totals'];
+    totals: Props["totals"];
 }) {
     return (
         <Panel title="Record results">
@@ -672,7 +934,7 @@ function ResultsPanel({
                                 Add grading costs to each card’s purchase price
                                 <span className="block text-muted-foreground">
                                     Each card gets its own fee plus an even
-                                    share of the {money(totals.shipping)}{' '}
+                                    share of the {money(totals.shipping)}{" "}
                                     shipping, so profit on a later sale reflects
                                     what the slab really cost you. Uncheck to
                                     leave purchase prices as they are.

@@ -7,6 +7,7 @@ use App\Actions\Grading\SyncGradingItemStatuses;
 use App\Enums\Grader;
 use App\Enums\GradingStatus;
 use App\Enums\ItemStatus;
+use App\Enums\ShippingCarrier;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Selling\GradingSubmissionRequest;
 use App\Http\Resources\CollectionItemResource;
@@ -71,11 +72,13 @@ class GradingSubmissionController extends Controller
         $validated = $request->validated();
 
         $submission = DB::transaction(function () use ($request, $validated, $addItems, $syncStatuses): GradingSubmission {
-            $submission = $request->user()->gradingSubmissions()->create([
+            $submission = $request->user()->gradingSubmissions()->make([
                 ...collect($validated)->except('collection_item_ids')->all(),
                 'status' => $validated['status'] ?? GradingStatus::Preparing->value,
                 'shipping_cost' => Money::toCents($validated['shipping_cost'] ?? null) ?? 0,
             ]);
+            $submission->stampMilestoneDates();
+            $submission->save();
 
             $itemIds = $validated['collection_item_ids'] ?? [];
 
@@ -116,6 +119,10 @@ class GradingSubmissionController extends Controller
                 'notes' => $submission->notes,
                 'is_completed' => $submission->isCompleted(),
                 'is_with_grader' => $submission->isWithGrader(),
+                'next_action' => ($next = $submission->status->next()) === null ? null : [
+                    'status' => $next->value,
+                    'label' => $next->actionLabel(),
+                ],
             ],
             'items' => $items->map(fn (CollectionItem $item): array => [
                 'item' => CollectionItemResource::make($item)->resolve(),
@@ -130,6 +137,7 @@ class GradingSubmissionController extends Controller
                 'shipping' => $submission->shipping_cost,
             ],
             'graders' => Grader::options(),
+            'carriers' => ShippingCarrier::options(),
             'statuses' => array_values(array_filter(
                 GradingStatus::options(),
                 fn (array $option): bool => $option['value'] !== GradingStatus::Completed->value,
@@ -152,12 +160,10 @@ class GradingSubmissionController extends Controller
             unset($attributes['status']);
         }
 
-        if (isset($attributes['status']) && $attributes['status'] !== GradingStatus::Preparing->value && blank($attributes['submitted_on'] ?? null) && $submission->submitted_on === null) {
-            $attributes['submitted_on'] = now()->toDateString();
-        }
-
         DB::transaction(function () use ($submission, $attributes, $syncStatuses): void {
-            $submission->update($attributes);
+            $submission->fill($attributes);
+            $submission->stampMilestoneDates();
+            $submission->save();
             $syncStatuses->handle($submission);
         });
 
@@ -198,7 +204,14 @@ class GradingSubmissionController extends Controller
             'status' => $submission->status->value,
             'status_label' => $submission->status->label(),
             'submitted_on' => $submission->submitted_on?->toDateString(),
+            'received_on' => $submission->received_on?->toDateString(),
+            'shipped_back_on' => $submission->shipped_back_on?->toDateString(),
             'returned_on' => $submission->returned_on?->toDateString(),
+            'outbound' => self::shipment($submission->outbound_carrier, $submission->outbound_tracking),
+            'return' => self::shipment($submission->return_carrier, $submission->return_tracking),
+            'days_out' => $submission->isWithGrader() && $submission->submitted_on !== null
+                ? (int) $submission->submitted_on->diffInDays(now()->startOfDay())
+                : null,
             'shipping_cost' => $submission->shipping_cost,
             'items_count' => $submission->collection_items_count ?? $submission->collectionItems()->count(),
             'fee_total' => isset($submission->fee_total) ? (int) $submission->fee_total : null,
@@ -207,6 +220,19 @@ class GradingSubmissionController extends Controller
                 ? (int) $submission->submitted_on->diffInDays($submission->returned_on)
                 : null,
             'created_at' => $submission->created_at->toIso8601String(),
+        ];
+    }
+
+    /**
+     * @return array{carrier: string|null, carrier_label: string|null, tracking: string|null, tracking_url: string|null}
+     */
+    private static function shipment(?ShippingCarrier $carrier, ?string $tracking): array
+    {
+        return [
+            'carrier' => $carrier?->value,
+            'carrier_label' => $carrier?->label(),
+            'tracking' => $tracking,
+            'tracking_url' => $carrier !== null && filled($tracking) ? $carrier->trackingUrl($tracking) : null,
         ];
     }
 }

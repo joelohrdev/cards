@@ -1,22 +1,29 @@
-import { Head, Link } from '@inertiajs/react';
-import { Calculator, Plus } from 'lucide-react';
-import { useState } from 'react';
-import { GradingRoi } from '@/components/grading/grading-roi';
-import { StatusPill } from '@/components/grading/status-pill';
-import { EmptyState } from '@/components/kit/empty-state';
-import { PageHeader } from '@/components/kit/page-header';
-import { Panel } from '@/components/kit/panel';
-import { Stat } from '@/components/kit/stat';
-import { Button } from '@/components/ui/button';
+import { Head, Link } from "@inertiajs/react";
+import { Calculator, Plus } from "lucide-react";
+import { useState } from "react";
+import { GradingRoi } from "@/components/grading/grading-roi";
+import { StatusPill } from "@/components/grading/status-pill";
+import { EmptyState } from "@/components/kit/empty-state";
+import { PageHeader } from "@/components/kit/page-header";
+import { Panel } from "@/components/kit/panel";
+import { Stat } from "@/components/kit/stat";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import { count, money, shortDate } from '@/lib/format';
-import grading from '@/routes/grading';
+} from "@/components/ui/dialog";
+import { count, money, shortDate } from "@/lib/format";
+import grading from "@/routes/grading";
+
+export type Shipment = {
+    carrier: string | null;
+    carrier_label: string | null;
+    tracking: string | null;
+    tracking_url: string | null;
+};
 
 export type SubmissionSummary = {
     id: number;
@@ -26,7 +33,12 @@ export type SubmissionSummary = {
     status: string;
     status_label: string;
     submitted_on: string | null;
+    received_on: string | null;
+    shipped_back_on: string | null;
     returned_on: string | null;
+    outbound: Shipment;
+    return: Shipment;
+    days_out: number | null;
     shipping_cost: number;
     items_count: number;
     fee_total: number | null;
@@ -94,13 +106,13 @@ export default function GradingIndex({ open, completed, stats }: Props) {
                         label="Average turnaround"
                         value={
                             stats.average_turnaround_days === null
-                                ? '—'
-                                : count(stats.average_turnaround_days, 'day')
+                                ? "—"
+                                : count(stats.average_turnaround_days, "day")
                         }
                         detail={
                             stats.average_turnaround_days === null
-                                ? 'Shows once a submission comes back'
-                                : 'Sent to returned'
+                                ? "Shows once a submission comes back"
+                                : "Sent to returned"
                         }
                     />
                 </div>
@@ -127,7 +139,7 @@ export default function GradingIndex({ open, completed, stats }: Props) {
                                 when you’re ready to send more cards.
                             </p>
                         ) : (
-                            <SubmissionTable submissions={open} />
+                            <SubmissionTable submissions={open} open />
                         )}
                     </Panel>
                     {completed.length > 0 && (
@@ -159,8 +171,10 @@ export default function GradingIndex({ open, completed, stats }: Props) {
 
 function SubmissionTable({
     submissions,
+    open = false,
 }: {
     submissions: SubmissionSummary[];
+    open?: boolean;
 }) {
     return (
         <div className="overflow-x-auto">
@@ -177,7 +191,7 @@ function SubmissionTable({
                             Fees + shipping
                         </th>
                         <th className="px-4 py-2 text-right font-medium">
-                            Turnaround
+                            {open ? "Out for" : "Turnaround"}
                         </th>
                     </tr>
                 </thead>
@@ -194,7 +208,7 @@ function SubmissionTable({
                                         submission.service_level,
                                     ]
                                         .filter(Boolean)
-                                        .join(' · ')}
+                                        .join(" · ")}
                                 </Link>
                                 {submission.reference && (
                                     <span className="ml-2 text-muted-foreground">
@@ -207,6 +221,9 @@ function SubmissionTable({
                                     status={submission.status}
                                     label={submission.status_label}
                                 />
+                                {open && (
+                                    <TrackingLink submission={submission} />
+                                )}
                             </td>
                             <td className="px-4 py-3 text-muted-foreground">
                                 {shortDate(submission.submitted_on)}
@@ -221,14 +238,46 @@ function SubmissionTable({
                                 )}
                             </td>
                             <td className="px-4 py-3 text-right text-muted-foreground tabular">
-                                {submission.turnaround_days === null
-                                    ? '—'
-                                    : count(submission.turnaround_days, 'day')}
+                                {days(
+                                    open
+                                        ? submission.days_out
+                                        : submission.turnaround_days,
+                                )}
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
         </div>
+    );
+}
+
+function days(value: number | null): string {
+    return value === null ? "—" : count(value, "day");
+}
+
+/**
+ * "Track" for the leg that's moving: the return shipment once the grader ships it back,
+ * otherwise the package on its way to the grader.
+ */
+function TrackingLink({ submission }: { submission: SubmissionSummary }) {
+    const shipment =
+        submission.status === "shipped"
+            ? submission.return
+            : submission.outbound;
+
+    if (!shipment.tracking_url || submission.status === "preparing") {
+        return null;
+    }
+
+    return (
+        <a
+            href={shipment.tracking_url}
+            target="_blank"
+            rel="noreferrer"
+            className="ml-2 text-xs text-primary hover:underline"
+        >
+            Track {shipment.carrier_label}
+        </a>
     );
 }
