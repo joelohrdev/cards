@@ -111,6 +111,24 @@ test('a back photo that is not an image is rejected before calling the model', f
         ->assertJsonValidationErrors(['back_photo' => 'Use a JPEG, PNG, WebP, or GIF photo.']);
 });
 
+test('player names read from a photo take the spelling of players already in the app', function (string $read, string $expected) {
+    Http::preventStrayRequests();
+    Http::fake(['api.anthropic.com/v1/messages' => Http::response(claudeReply(json_encode(['sport' => 'baseball', 'name' => $read, 'confidence' => 'high'])))]);
+
+    Player::factory()->create(['name' => 'Ken Griffey Jr.']);
+    Player::factory()->create(['name' => 'Ronald Acuña Jr.']);
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('identify.photo.store'), ['photo' => UploadedFile::fake()->image('card.jpg')], ['Accept' => 'application/json'])
+        ->assertOk()
+        ->assertJsonPath('suggestion.name', $expected);
+})->with([
+    'missing period and capitals' => ['ken griffey jr', 'Ken Griffey Jr.'],
+    'no accent' => ['Ronald Acuna Jr', 'Ronald Acuña Jr.'],
+    'two players, one unknown' => ['KEN GRIFFEY JR. & Mike Trout', 'Ken Griffey Jr. / Mike Trout'],
+    'no close match' => ['Ken Griffin', 'Ken Griffin'],
+]);
+
 test('malformed model output returns a retry message instead of a suggestion', function (string $text) {
     Http::preventStrayRequests();
     Http::fake(['api.anthropic.com/v1/messages' => Http::response(claudeReply($text))]);

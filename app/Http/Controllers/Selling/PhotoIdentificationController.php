@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\CardIdentification\CardIdentificationFailed;
 use App\Services\CardIdentification\CardIdentifier;
 use App\Services\CardIdentification\CatalogMatcher;
+use App\Services\CardIdentification\PlayerNameMatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -25,7 +26,7 @@ class PhotoIdentificationController extends Controller
     /**
      * 200 {suggestion: PhotoSuggestion}; 422/429/502/503 {message} explain what to do next.
      */
-    public function store(Request $request, CardIdentifier $identifier, CatalogMatcher $matcher): JsonResponse
+    public function store(Request $request, CardIdentifier $identifier, CatalogMatcher $matcher, PlayerNameMatcher $playerNames): JsonResponse
     {
         if (! $identifier->isConfigured()) {
             return response()->json(['message' => 'Photo identification isn’t set up yet. Add an Anthropic API key as ANTHROPIC_API_KEY in the .env file to turn it on.'], 503);
@@ -47,6 +48,8 @@ class PhotoIdentificationController extends Controller
 
             return response()->json(['message' => 'Couldn’t read the card from that photo. Try again with the whole card in frame, in good light, without glare.'], 502);
         }
+
+        $suggestion['name'] = $playerNames->match($suggestion['name'], $suggestion['sport']);
 
         return response()->json([
             'suggestion' => [...$suggestion, 'matches' => $matcher->matches($suggestion)],
