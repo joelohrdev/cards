@@ -10,7 +10,7 @@ use App\Models\GradingSubmission;
 /**
  * Keeps the cards in a submission in step with where the submission is.
  *
- * Once a submission is sent, its cards are "At grading". Moving it back to "Preparing" returns
+ * Once a submission is sent, its cards are "At grading". Moving it back to "Going to send" returns
  * them to "Owned". Completing is handled by CompleteGradingSubmission.
  */
 class SyncGradingItemStatuses

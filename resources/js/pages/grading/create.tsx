@@ -1,16 +1,16 @@
-import { Form, Head, Link } from "@inertiajs/react";
+import { Form, Head, Link } from '@inertiajs/react';
 import {
     Field,
     MoneyInput,
     NativeSelect,
     Textarea,
-} from "@/components/kit/field";
-import { PageHeader } from "@/components/kit/page-header";
-import { Panel } from "@/components/kit/panel";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import grading from "@/routes/grading";
-import type { Option } from "@/types";
+} from '@/components/kit/field';
+import { PageHeader } from '@/components/kit/page-header';
+import { Panel } from '@/components/kit/panel';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import grading from '@/routes/grading';
+import type { Option } from '@/types';
 
 export default function GradingCreate({ graders }: { graders: Option[] }) {
     return (

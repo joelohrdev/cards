@@ -4,6 +4,7 @@ use App\Enums\Grader;
 use App\Enums\GradingStatus;
 use App\Enums\ItemStatus;
 use App\Enums\RawCondition;
+use App\Models\Card;
 use App\Models\CollectionItem;
 use App\Models\GradingSubmission;
 use App\Models\User;
@@ -201,6 +202,33 @@ test('shipments are saved with a link to the carrier’s tracking page', functio
             ->where('submission.next_action', null));
 });
 
+test('a card’s page shows where its grading submission is, with tracking', function () {
+    $this->travelTo('2026-11-27');
+    $user = User::factory()->create();
+    $item = CollectionItem::factory()->for($user)->create();
+    submissionWith($user, [$item], attributes: [
+        'status' => GradingStatus::Received,
+        'submitted_on' => '2026-11-17',
+        'received_on' => '2026-11-20',
+        'outbound_carrier' => 'ups',
+        'outbound_tracking' => '1Z999',
+        'reference' => '12345',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('collection.show', $item))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('collection/show')
+            ->has('gradingSubmissions', 1)
+            ->where('gradingSubmissions.0.status', 'received')
+            ->where('gradingSubmissions.0.status_label', 'Received by grader')
+            ->where('gradingSubmissions.0.is_completed', false)
+            ->where('gradingSubmissions.0.reference', '12345')
+            ->where('gradingSubmissions.0.received_on', '2026-11-20')
+            ->where('gradingSubmissions.0.outbound.tracking_url', 'https://www.ups.com/track?tracknum=1Z999')
+            ->where('gradingSubmissions.0.days_out', 10));
+});
+
 test('milestone dates can’t go backwards, and only filled-in dates are compared', function () {
     $user = User::factory()->create();
     $submission = GradingSubmission::factory()->for($user)->create();
@@ -392,4 +420,105 @@ test('only preparing submissions are offered for new cards', function () {
         ->assertJsonCount(2, 'submissions')
         ->assertJsonFragment(['id' => $preparing->id])
         ->assertJsonFragment(['id' => $teammates->id]);
+});
+
+test('a new card can be marked as going to send in a new submission', function () {
+    $user = User::factory()->create();
+    $card = Card::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('collection.store'), [
+            'card_id' => $card->id,
+            'quantity' => 2,
+            'grading' => ['plan' => 'going', 'grader' => 'SGC', 'service_level' => 'Bulk'],
+        ])
+        ->assertSessionHasNoErrors();
+
+    $submission = GradingSubmission::query()->sole();
+    expect($submission->grader)->toBe(Grader::Sgc)
+        ->and($submission->status)->toBe(GradingStatus::Preparing)
+        ->and($submission->status->label())->toBe('Going to send')
+        ->and($submission->collectionItems()->count())->toBe(2)
+        ->and($user->collectionItems()->pluck('status')->unique()->all())->toBe([ItemStatus::Owned]);
+});
+
+test('a new card can be added as already sent, or into an open submission', function () {
+    $this->travelTo('2026-11-27');
+    $user = User::factory()->create();
+    $card = Card::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('collection.store'), [
+            'card_id' => $card->id,
+            'grading' => ['plan' => 'sent', 'grader' => 'PSA', 'status' => 'received'],
+        ])
+        ->assertSessionHasNoErrors();
+
+    $sent = GradingSubmission::query()->sole();
+    expect($sent->status)->toBe(GradingStatus::Received)
+        ->and($sent->submitted_on->toDateString())->toBe('2026-11-27')
+        ->and($sent->collectionItems()->sole()->status)->toBe(ItemStatus::AtGrading);
+
+    $this->actingAs($user)
+        ->post(route('collection.store'), ['card_id' => $card->id, 'grading' => ['plan' => 'sent', 'submission_id' => $sent->id]])
+        ->assertSessionHasNoErrors();
+
+    expect($sent->collectionItems()->count())->toBe(2)
+        ->and(GradingSubmission::query()->count())->toBe(1);
+});
+
+test('a new card can’t join a submission that doesn’t match the plan, or be graded already', function () {
+    $user = User::factory()->create();
+    $card = Card::factory()->create();
+    $goingToSend = GradingSubmission::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->post(route('collection.store'), ['card_id' => $card->id, 'grading' => ['plan' => 'sent', 'submission_id' => $goingToSend->id]])
+        ->assertSessionHasErrors('grading.submission_id');
+
+    $this->actingAs($user)
+        ->post(route('collection.store'), ['card_id' => $card->id, 'is_graded' => true, 'grader' => 'PSA', 'grade' => '9', 'grading' => ['plan' => 'going', 'grader' => 'PSA']])
+        ->assertSessionHasErrors('grading');
+
+    $this->actingAs($user)
+        ->post(route('collection.store'), ['card_id' => $card->id, 'grading' => ['plan' => 'going']])
+        ->assertSessionHasErrors('grading.grader');
+
+    expect(CollectionItem::query()->count())->toBe(0);
+});
+
+test('the add-card page offers open submissions to join', function () {
+    $user = User::factory()->create();
+    GradingSubmission::factory()->for($user)->create();
+    GradingSubmission::factory()->for($user)->create(['status' => GradingStatus::Grading]);
+    GradingSubmission::factory()->for($user)->create(['status' => GradingStatus::Completed]);
+
+    $this->actingAs($user)
+        ->get(route('collection.create'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('gradingSubmissions', 2)
+            ->where('gradingSubmissions.1.status_label', 'Going to send')
+            ->where('gradingSubmissions.1.is_sent', false)
+            ->has('gradingStatuses', 4));
+});
+
+test('the overview lists cards awaiting grading, going to send first', function () {
+    $user = User::factory()->create();
+    $out = CollectionItem::factory()->for($user)->create();
+    $planned = CollectionItem::factory()->for($user)->create();
+    $done = CollectionItem::factory()->for($user)->create();
+    submissionWith($user, [$out], attributes: ['status' => GradingStatus::Grading, 'submitted_on' => now()->subDays(12)]);
+    submissionWith($user, [$planned]);
+    submissionWith($user, [$done], attributes: ['status' => GradingStatus::Completed]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('awaitingGrading.going_to_send', 1)
+            ->where('awaitingGrading.at_grader', 1)
+            ->has('awaitingGrading.items', 2)
+            ->where('awaitingGrading.items.0.item.id', $planned->id)
+            ->where('awaitingGrading.items.0.submission.status_label', 'Going to send')
+            ->where('awaitingGrading.items.1.item.id', $out->id)
+            ->where('awaitingGrading.items.1.submission.days_out', 12));
 });

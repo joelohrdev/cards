@@ -201,17 +201,7 @@ class GradingSubmissionController extends Controller
             'grader' => $submission->grader->value,
             'service_level' => $submission->service_level,
             'reference' => $submission->reference,
-            'status' => $submission->status->value,
-            'status_label' => $submission->status->label(),
-            'submitted_on' => $submission->submitted_on?->toDateString(),
-            'received_on' => $submission->received_on?->toDateString(),
-            'shipped_back_on' => $submission->shipped_back_on?->toDateString(),
-            'returned_on' => $submission->returned_on?->toDateString(),
-            'outbound' => self::shipment($submission->outbound_carrier, $submission->outbound_tracking),
-            'return' => self::shipment($submission->return_carrier, $submission->return_tracking),
-            'days_out' => $submission->isWithGrader() && $submission->submitted_on !== null
-                ? (int) $submission->submitted_on->diffInDays(now()->startOfDay())
-                : null,
+            ...$submission->progress(),
             'shipping_cost' => $submission->shipping_cost,
             'items_count' => $submission->collection_items_count ?? $submission->collectionItems()->count(),
             'fee_total' => isset($submission->fee_total) ? (int) $submission->fee_total : null,
@@ -220,19 +210,6 @@ class GradingSubmissionController extends Controller
                 ? (int) $submission->submitted_on->diffInDays($submission->returned_on)
                 : null,
             'created_at' => $submission->created_at->toIso8601String(),
-        ];
-    }
-
-    /**
-     * @return array{carrier: string|null, carrier_label: string|null, tracking: string|null, tracking_url: string|null}
-     */
-    private static function shipment(?ShippingCarrier $carrier, ?string $tracking): array
-    {
-        return [
-            'carrier' => $carrier?->value,
-            'carrier_label' => $carrier?->label(),
-            'tracking' => $tracking,
-            'tracking_url' => $carrier !== null && filled($tracking) ? $carrier->trackingUrl($tracking) : null,
         ];
     }
 }

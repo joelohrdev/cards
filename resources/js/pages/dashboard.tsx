@@ -1,7 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
 import { Plus, Rows3 } from 'lucide-react';
+import { CardThumb } from '@/components/cards/card-thumb';
 import { CardTile } from '@/components/cards/card-tile';
 import { SetupChecklist } from '@/components/dashboard/setup-checklist';
+import { StatusPill } from '@/components/grading/status-pill';
 import type { SetupStep } from '@/components/dashboard/setup-checklist';
 import { BarList } from '@/components/kit/bar-list';
 import { EmptyState } from '@/components/kit/empty-state';
@@ -12,6 +14,7 @@ import { ValueChart } from '@/components/kit/value-chart';
 import { Button } from '@/components/ui/button';
 import { compactMoney, count, money, percent } from '@/lib/format';
 import collection from '@/routes/collection';
+import grading from '@/routes/grading';
 import sets from '@/routes/sets';
 import type { CollectionItem } from '@/types';
 
@@ -32,7 +35,23 @@ type Props = {
     recentItems: CollectionItem[];
     setProgress: { id: number; name: string; owned: number; total: number }[];
     activity: { grading: number; listings: number; wants: number };
+    awaitingGrading: AwaitingGrading;
     setup: SetupStep[] | null;
+};
+
+type AwaitingGrading = {
+    going_to_send: number;
+    at_grader: number;
+    items: {
+        item: CollectionItem;
+        submission: {
+            id: number;
+            grader: string;
+            status: string;
+            status_label: string;
+            days_out: number | null;
+        };
+    }[];
 };
 
 export default function Dashboard({
@@ -45,6 +64,7 @@ export default function Dashboard({
     recentItems,
     setProgress,
     activity,
+    awaitingGrading,
     setup,
 }: Props) {
     if (totals.count === 0 && recentItems.length === 0) {
@@ -168,6 +188,8 @@ export default function Dashboard({
                     </ul>
                 </Panel>
             </div>
+
+            <AwaitingGradingPanel awaiting={awaitingGrading} />
 
             {topItems.length > 0 && (
                 <section className="mt-8">
@@ -341,5 +363,71 @@ function AttentionRow({
                 )}
             </Link>
         </li>
+    );
+}
+
+/**
+ * Cards in open grading submissions: the ones still to be sent, then the ones out longest.
+ */
+function AwaitingGradingPanel({ awaiting }: { awaiting: AwaitingGrading }) {
+    const total = awaiting.going_to_send + awaiting.at_grader;
+
+    if (total === 0) {
+        return null;
+    }
+
+    return (
+        <Panel
+            title="Awaiting grading"
+            className="mt-6"
+            bodyClassName="p-0"
+            actions={
+                <Link
+                    href={grading.index()}
+                    className="text-sm font-medium text-primary hover:underline"
+                >
+                    All submissions
+                </Link>
+            }
+        >
+            <p className="border-b px-4 py-2.5 text-sm text-muted-foreground">
+                {count(awaiting.going_to_send, 'card')} going to send ·{' '}
+                {count(awaiting.at_grader, 'card')} at the grader
+            </p>
+            <ul className="divide-y">
+                {awaiting.items.map(({ item, submission }) => (
+                    <li key={item.id}>
+                        <Link
+                            href={collection.show(item.id)}
+                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/40"
+                        >
+                            <CardThumb item={item} />
+                            <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-medium">
+                                    {item.title}
+                                </span>
+                                <span className="block text-xs text-muted-foreground">
+                                    {submission.grader}
+                                    {submission.days_out !== null &&
+                                        ` · out ${count(submission.days_out, 'day')}`}
+                                </span>
+                            </span>
+                            <StatusPill
+                                status={submission.status}
+                                label={submission.status_label}
+                            />
+                        </Link>
+                    </li>
+                ))}
+            </ul>
+            {total > awaiting.items.length && (
+                <Link
+                    href={grading.index()}
+                    className="block border-t px-4 py-2.5 text-sm text-primary hover:underline"
+                >
+                    See all {total.toLocaleString()} cards
+                </Link>
+            )}
+        </Panel>
     );
 }

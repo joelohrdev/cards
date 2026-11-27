@@ -1,12 +1,12 @@
-import { Camera, ScanSearch } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { useLookup } from "@/hooks/use-lookup";
-import { shrinkPhoto } from "@/lib/shrink-photo";
-import { cn } from "@/lib/utils";
-import identify from "@/routes/identify";
-import type { PhotoSuggestion } from "@/types";
+import { Camera, ScanSearch } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { useLookup } from '@/hooks/use-lookup';
+import { shrinkPhoto } from '@/lib/shrink-photo';
+import { cn } from '@/lib/utils';
+import identify from '@/routes/identify';
+import type { PhotoSuggestion } from '@/types';
 
 /**
  * Longest edge sent to the vision model. The scaled-down photos are also what the
@@ -15,11 +15,11 @@ import type { PhotoSuggestion } from "@/types";
 const MAX_EDGE = 1568;
 
 const NOT_CONFIGURED_MESSAGE =
-    "Photo identification isn’t set up yet. Add an Anthropic API key as ANTHROPIC_API_KEY in the .env file to turn it on.";
+    'Photo identification isn’t set up yet. Add an Anthropic API key as ANTHROPIC_API_KEY in the .env file to turn it on.';
 
 function readCookie(name: string): string | null {
     const match = document.cookie
-        .split("; ")
+        .split('; ')
         .find((entry) => entry.startsWith(`${name}=`));
 
     return match ? decodeURIComponent(match.slice(name.length + 1)) : null;
@@ -44,7 +44,7 @@ export function IdentifyFromPhoto({
     const [frontPreview, setFrontPreview] = useState<string | null>(null);
     const [working, setWorking] = useState(false);
     const [message, setMessage] = useState<{
-        tone: "ok" | "error";
+        tone: 'ok' | 'error';
         text: string;
     } | null>(null);
     const { data: status } = useLookup<{ configured: boolean }>(
@@ -68,7 +68,7 @@ export function IdentifyFromPhoto({
 
     function openCamera() {
         if (notConfigured) {
-            setMessage({ tone: "error", text: NOT_CONFIGURED_MESSAGE });
+            setMessage({ tone: 'error', text: NOT_CONFIGURED_MESSAGE });
 
             return;
         }
@@ -78,7 +78,7 @@ export function IdentifyFromPhoto({
 
     async function photoTaken(file: File | undefined) {
         if (input.current) {
-            input.current.value = "";
+            input.current.value = '';
         }
 
         if (!file) {
@@ -105,20 +105,20 @@ export function IdentifyFromPhoto({
                 ? await shrinkPhoto(backFile, MAX_EDGE)
                 : null;
             const body = new FormData();
-            body.append("photo", frontPhoto, frontPhoto.name);
+            body.append('photo', frontPhoto, frontPhoto.name);
 
             if (back) {
-                body.append("back_photo", back, back.name);
+                body.append('back_photo', back, back.name);
             }
 
             const response = await fetch(identify.photo.store.url(), {
-                method: "POST",
+                method: 'POST',
                 body,
-                credentials: "same-origin",
+                credentials: 'same-origin',
                 headers: {
-                    Accept: "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                    "X-XSRF-TOKEN": readCookie("XSRF-TOKEN") ?? "",
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': readCookie('XSRF-TOKEN') ?? '',
                 },
             });
             const json = (await response.json().catch(() => ({}))) as {
@@ -131,11 +131,11 @@ export function IdentifyFromPhoto({
                 onResult(json.suggestion, frontPhoto, back);
                 setFront(null);
                 setMessage({
-                    tone: "ok",
+                    tone: 'ok',
                     text:
                         json.suggestion.matches.length > 0
-                            ? "Filled in what we could read. Check the details before saving."
-                            : "Filled in what we could read, but found no matching card in the catalog. Check the details before saving.",
+                            ? 'Filled in what we could read. Check the details before saving.'
+                            : 'Filled in what we could read, but found no matching card in the catalog. Check the details before saving.',
                 });
 
                 return;
@@ -143,8 +143,8 @@ export function IdentifyFromPhoto({
 
             if (response.status === 429) {
                 setMessage({
-                    tone: "error",
-                    text: "That’s a lot of photos in a row. Wait a minute, then try again.",
+                    tone: 'error',
+                    text: 'That’s a lot of photos in a row. Wait a minute, then try again.',
                 });
 
                 return;
@@ -154,16 +154,16 @@ export function IdentifyFromPhoto({
                 ? Object.values(json.errors)[0]?.[0]
                 : undefined;
             setMessage({
-                tone: "error",
+                tone: 'error',
                 text:
                     firstError ??
                     json.message ??
-                    "Couldn’t identify those photos. Try again, or enter the card by hand.",
+                    'Couldn’t identify those photos. Try again, or enter the card by hand.',
             });
         } catch {
             setMessage({
-                tone: "error",
-                text: "Couldn’t reach the server. Check your connection and try again.",
+                tone: 'error',
+                text: 'Couldn’t reach the server. Check your connection and try again.',
             });
         } finally {
             setWorking(false);
@@ -189,8 +189,8 @@ export function IdentifyFromPhoto({
                     <div className="grid gap-2">
                         <p className="text-sm">
                             {working
-                                ? "Reading the card…"
-                                : "Got the front. Now flip the card over."}
+                                ? 'Reading the card…'
+                                : 'Got the front. Now flip the card over.'}
                         </p>
                         <div className="flex flex-wrap gap-2">
                             <Button
@@ -238,10 +238,10 @@ export function IdentifyFromPhoto({
             {message && (
                 <p
                     className={cn(
-                        "text-xs",
-                        message.tone === "error"
-                            ? "text-destructive"
-                            : "text-muted-foreground",
+                        'text-xs',
+                        message.tone === 'error'
+                            ? 'text-destructive'
+                            : 'text-muted-foreground',
                     )}
                     role="status"
                 >

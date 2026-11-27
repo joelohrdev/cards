@@ -14,6 +14,7 @@ enum GradingStatus: string
     public function label(): string
     {
         return match ($this) {
+            self::Preparing => 'Going to send',
             self::Submitted => 'Sent to grader',
             self::Received => 'Received by grader',
             self::Shipped => 'Shipped back',
@@ -41,7 +42,7 @@ enum GradingStatus: string
     public function actionLabel(): string
     {
         return match ($this) {
-            self::Preparing => 'Move back to preparing',
+            self::Preparing => 'Move back to going to send',
             self::Submitted => 'Mark as sent',
             self::Received => 'Mark received by grader',
             self::Grading => 'Mark as grading',

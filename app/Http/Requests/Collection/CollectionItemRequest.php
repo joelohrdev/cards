@@ -4,9 +4,12 @@ namespace App\Http\Requests\Collection;
 
 use App\Concerns\NormalizesMoneyInput;
 use App\Enums\Grader;
+use App\Enums\GradingStatus;
 use App\Enums\ItemStatus;
 use App\Enums\RawCondition;
 use App\Enums\Sport;
+use App\Models\GradingSubmission;
+use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -69,9 +72,32 @@ class CollectionItemRequest extends FormRequest
             'tags' => ['nullable', 'array', 'max:30'],
             'tags.*' => ['string', 'max:50'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'grading' => [Rule::prohibitedIf(! $creating || $this->boolean('is_graded') || ! in_array($this->input('status'), [null, '', ItemStatus::Owned->value], true)), 'nullable', 'array'],
+            'grading.plan' => ['required_with:grading', Rule::in(['going', 'sent'])],
+            'grading.submission_id' => ['nullable', 'integer', $this->openSubmissionMatchingPlan()],
+            'grading.grader' => [Rule::requiredIf(fn (): bool => filled($this->input('grading')) && blank($this->input('grading.submission_id'))), 'nullable', Rule::enum(Grader::class)],
+            'grading.service_level' => ['nullable', 'string', 'max:100'],
+            'grading.status' => ['nullable', Rule::in([GradingStatus::Submitted->value, GradingStatus::Received->value, GradingStatus::Grading->value, GradingStatus::Shipped->value])],
+            'grading.submitted_on' => ['nullable', 'date', 'before_or_equal:today'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:12288'],
             'back_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:12288'],
         ];
+    }
+
+    /**
+     * The chosen submission must still be open and match the plan: "going to send" cards join
+     * a submission that hasn't been sent, "already sent" cards one that has.
+     */
+    private function openSubmissionMatchingPlan(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            $submission = GradingSubmission::query()->open()->find((int) $value);
+            $wantsSent = $this->input('grading.plan') === 'sent';
+
+            if ($submission === null || $submission->isWithGrader() !== $wantsSent) {
+                $fail('Choose one of the open submissions in the list.');
+            }
+        };
     }
 
     /**
@@ -82,6 +108,9 @@ class CollectionItemRequest extends FormRequest
         return [
             'card.required' => 'Choose a card from the catalog or enter a new one.',
             'card.number.required_with' => 'Enter the card number.',
+            'grading.prohibited' => 'Only raw cards you have on hand can be sent for grading.',
+            'grading.grader.required' => 'Choose the grading company.',
+            'grading.submitted_on.before_or_equal' => 'The sent date can’t be in the future.',
         ];
     }
 }

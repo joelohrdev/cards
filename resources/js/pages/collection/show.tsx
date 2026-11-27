@@ -5,6 +5,9 @@ import { CardArt } from '@/components/cards/card-art';
 import { CardFlags } from '@/components/cards/card-flags';
 import { CardTile } from '@/components/cards/card-tile';
 import { ItemActions } from '@/components/collection/item-actions';
+import { GradingProgress } from '@/components/grading/grading-progress';
+import type { GradingProgressData } from '@/components/grading/grading-progress';
+import { StatusPill } from '@/components/grading/status-pill';
 import { GradeBadge } from '@/components/cards/grade-badge';
 import { TagChip } from '@/components/cards/tag-chip';
 import { Field, MoneyInput, NativeSelect } from '@/components/kit/field';
@@ -24,6 +27,7 @@ import { money, shortDate } from '@/lib/format';
 import { shrinkPhoto } from '@/lib/shrink-photo';
 import { cn } from '@/lib/utils';
 import collection from '@/routes/collection';
+import grading from '@/routes/grading';
 import comps from '@/routes/comps';
 import locations from '@/routes/locations';
 import sets from '@/routes/sets';
@@ -66,13 +70,14 @@ type Props = {
         published_at: string | null;
         error: string | null;
     }[];
-    gradingSubmissions: {
+    gradingSubmissions: (GradingProgressData & {
         id: number;
         grader: string;
-        status: string;
-        submitted_on: string | null;
+        service_level: string | null;
+        reference: string | null;
+        is_completed: boolean;
         resulting_grade: string | null;
-    }[];
+    })[];
     options: FormOptions;
 };
 
@@ -86,6 +91,9 @@ export default function CollectionShow({
     gradingSubmissions,
     options,
 }: Props) {
+    const openSubmission =
+        gradingSubmissions.find((submission) => !submission.is_completed) ??
+        null;
     const [activeImage, setActiveImage] = useState(0);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const fileInput = useRef<HTMLInputElement>(null);
@@ -317,6 +325,42 @@ export default function CollectionShow({
                         ))}
                     </div>
 
+                    {openSubmission && (
+                        <Panel
+                            title={
+                                <span className="flex flex-wrap items-center gap-2">
+                                    Grading at {openSubmission.grader}
+                                    <StatusPill
+                                        status={openSubmission.status}
+                                        label={openSubmission.status_label}
+                                    />
+                                </span>
+                            }
+                            actions={
+                                <Link
+                                    href={grading.show(openSubmission.id)}
+                                    className="text-sm text-primary hover:underline"
+                                >
+                                    View submission
+                                </Link>
+                            }
+                        >
+                            {(openSubmission.service_level ||
+                                openSubmission.reference) && (
+                                <p className="mb-4 text-sm text-muted-foreground">
+                                    {[
+                                        openSubmission.service_level,
+                                        openSubmission.reference &&
+                                            `#${openSubmission.reference}`,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' · ')}
+                                </p>
+                            )}
+                            <GradingProgress progress={openSubmission} />
+                        </Panel>
+                    )}
+
                     <Panel title="Details">
                         <dl className="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
                             <Detail label="Set">
@@ -453,15 +497,18 @@ export default function CollectionShow({
                                         key={submission.id}
                                         className="flex flex-wrap justify-between gap-2"
                                     >
-                                        <span>
+                                        <Link
+                                            href={grading.show(submission.id)}
+                                            className="hover:underline"
+                                        >
                                             Sent to {submission.grader}
                                             {submission.submitted_on &&
                                                 ` · ${shortDate(submission.submitted_on)}`}
-                                        </span>
+                                        </Link>
                                         <span>
                                             {submission.resulting_grade
                                                 ? `Graded ${submission.resulting_grade}`
-                                                : submission.status}
+                                                : submission.status_label}
                                         </span>
                                     </li>
                                 ))}

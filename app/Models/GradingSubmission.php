@@ -87,7 +87,7 @@ class GradingSubmission extends Model
 
     /**
      * Fill in today's date for the milestone the submission just reached, unless one was entered.
-     * Any status past "Preparing" means it was sent, so the sent date is filled in too.
+     * Any status past "Going to send" means it was sent, so the sent date is filled in too.
      */
     public function stampMilestoneDates(): void
     {
@@ -108,6 +108,42 @@ class GradingSubmission extends Model
         if ($this->status === GradingStatus::Shipped && $this->shipped_back_on === null) {
             $this->shipped_back_on = $today;
         }
+    }
+
+    /**
+     * Where the submission is, for the progress timeline: status, milestone dates, both
+     * shipments with tracking links, and how many days the cards have been out.
+     *
+     * @return array{status: string, status_label: string, submitted_on: string|null, received_on: string|null, shipped_back_on: string|null, returned_on: string|null, outbound: array{carrier: string|null, carrier_label: string|null, tracking: string|null, tracking_url: string|null}, return: array{carrier: string|null, carrier_label: string|null, tracking: string|null, tracking_url: string|null}, days_out: int|null}
+     */
+    public function progress(): array
+    {
+        return [
+            'status' => $this->status->value,
+            'status_label' => $this->status->label(),
+            'submitted_on' => $this->submitted_on?->toDateString(),
+            'received_on' => $this->received_on?->toDateString(),
+            'shipped_back_on' => $this->shipped_back_on?->toDateString(),
+            'returned_on' => $this->returned_on?->toDateString(),
+            'outbound' => self::shipment($this->outbound_carrier, $this->outbound_tracking),
+            'return' => self::shipment($this->return_carrier, $this->return_tracking),
+            'days_out' => $this->isWithGrader() && $this->submitted_on !== null
+                ? (int) $this->submitted_on->diffInDays(now()->startOfDay())
+                : null,
+        ];
+    }
+
+    /**
+     * @return array{carrier: string|null, carrier_label: string|null, tracking: string|null, tracking_url: string|null}
+     */
+    private static function shipment(?ShippingCarrier $carrier, ?string $tracking): array
+    {
+        return [
+            'carrier' => $carrier?->value,
+            'carrier_label' => $carrier?->label(),
+            'tracking' => $tracking,
+            'tracking_url' => $carrier !== null && filled($tracking) ? $carrier->trackingUrl($tracking) : null,
+        ];
     }
 
     public function isCompleted(): bool

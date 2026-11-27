@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\ValueSnapshot;
 use App\Models\WantListEntry;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -109,6 +110,7 @@ class DashboardController extends Controller
             ->values();
 
         return Inertia::render('dashboard', [
+            'awaitingGrading' => $this->awaitingGrading(),
             'totals' => [
                 'count' => (int) $totals->item_count,
                 'value' => (int) $totals->total_value,
@@ -147,6 +149,46 @@ class DashboardController extends Controller
                 'wants' => WantListEntry::query()->count(),
             ],
         ]);
+    }
+
+    /**
+     * Cards in open grading submissions, those still to be sent first, then those out the
+     * longest. Counts cover every card; the list shows the first few.
+     *
+     * @return array{going_to_send: int, at_grader: int, items: list<array<string, mixed>>}
+     */
+    private function awaitingGrading(): array
+    {
+        $open = fn (Builder|BelongsToMany $submissions) => $submissions->where('grading_submissions.status', '!=', GradingStatus::Completed->value);
+
+        $rows = CollectionItem::query()
+            ->whereHas('gradingSubmissions', $open)
+            ->with([...CollectionItemResource::LIST_RELATIONS, 'gradingSubmissions' => $open])
+            ->get()
+            ->map(fn (CollectionItem $item): array => ['item' => $item, 'submission' => $item->gradingSubmissions->first()])
+            ->filter(fn (array $row): bool => $row['submission'] instanceof GradingSubmission)
+            ->sortBy([
+                fn (array $a, array $b): int => $a['submission']->isWithGrader() <=> $b['submission']->isWithGrader(),
+                fn (array $a, array $b): int => $a['submission']->submitted_on <=> $b['submission']->submitted_on,
+                fn (array $a, array $b): int => $a['item']->id <=> $b['item']->id,
+            ]);
+
+        [$atGrader, $goingToSend] = $rows->partition(fn (array $row): bool => $row['submission']->isWithGrader());
+
+        return [
+            'going_to_send' => $goingToSend->count(),
+            'at_grader' => $atGrader->count(),
+            'items' => array_values($rows->take(8)->map(fn (array $row): array => [
+                'item' => CollectionItemResource::make($row['item'])->resolve(),
+                'submission' => [
+                    'id' => $row['submission']->id,
+                    'grader' => $row['submission']->grader->value,
+                    'status' => $row['submission']->status->value,
+                    'status_label' => $row['submission']->status->label(),
+                    'days_out' => $row['submission']->progress()['days_out'],
+                ],
+            ])->all()),
+        ];
     }
 
     /**

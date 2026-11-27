@@ -142,7 +142,7 @@ export function GradingAction({
                                 title="Start a new submission"
                                 detail={
                                     submissions.length === 0
-                                        ? 'You have no submissions being prepared.'
+                                        ? 'Nothing is waiting to be sent.'
                                         : undefined
                                 }
                             />

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Collection;
 
 use App\Actions\Collection\SaveCollectionItem;
 use App\Actions\Collection\StoreCardPhoto;
+use App\Actions\Grading\PlaceNewItemsInGrading;
+use App\Enums\GradingStatus;
 use App\Enums\ImageSide;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Collection\CollectionItemRequest;
@@ -100,20 +102,44 @@ class CollectionItemController extends Controller
         return Inertia::render('collection/create', [
             'options' => FormOptions::for(),
             'prefillCard' => $prefillCard,
+            'gradingSubmissions' => GradingSubmission::query()
+                ->open()
+                ->withCount('collectionItems')
+                ->latest()
+                ->latest('id')
+                ->get()
+                ->map(fn (GradingSubmission $submission): array => [
+                    'id' => $submission->id,
+                    'grader' => $submission->grader->value,
+                    'service_level' => $submission->service_level,
+                    'reference' => $submission->reference,
+                    'status' => $submission->status->value,
+                    'status_label' => $submission->status->label(),
+                    'is_sent' => $submission->isWithGrader(),
+                    'items_count' => $submission->collection_items_count,
+                ]),
+            'gradingStatuses' => array_values(array_filter(
+                GradingStatus::options(),
+                fn (array $option): bool => ! in_array($option['value'], [GradingStatus::Preparing->value, GradingStatus::Completed->value], true),
+            )),
         ]);
     }
 
     /**
      * Add one or more copies of a card to the collection.
      */
-    public function store(CollectionItemRequest $request, SaveCollectionItem $saveCollectionItem, StoreCardPhoto $storeCardPhoto): RedirectResponse
+    public function store(CollectionItemRequest $request, SaveCollectionItem $saveCollectionItem, StoreCardPhoto $storeCardPhoto, PlaceNewItemsInGrading $placeInGrading): RedirectResponse
     {
         $data = $request->validated();
+        $grading = $data['grading'] ?? null;
+        unset($data['grading']);
         $quantity = (int) ($data['quantity'] ?? 1);
         $item = null;
+        $added = collect();
 
         for ($copy = 0; $copy < $quantity; $copy++) {
             $item = $saveCollectionItem->handle($request->user(), $data);
+            $added->push($item);
             $data['card_id'] = $item->card_id;
             $data['parallel_id'] = $item->parallel_id;
 
@@ -124,10 +150,16 @@ class CollectionItemController extends Controller
             }
         }
 
-        Inertia::flash('toast', [
-            'type' => 'success',
-            'message' => $quantity > 1 ? "Added {$quantity} copies of {$item->title()}." : "Added {$item->title()}.",
-        ]);
+        $message = $quantity > 1 ? "Added {$quantity} copies of {$item->title()}." : "Added {$item->title()}.";
+
+        if ($grading !== null) {
+            $submission = $placeInGrading->handle($request->user(), $added, $grading);
+            $message .= $submission->isWithGrader()
+                ? " Marked as sent to {$submission->grader->value}."
+                : " Added to your {$submission->grader->value} cards going to send.";
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $message]);
 
         if ($request->boolean('add_another')) {
             return to_route('collection.create');
@@ -196,10 +228,12 @@ class CollectionItemController extends Controller
                 'error' => $listing->error,
             ]),
             'gradingSubmissions' => $item->gradingSubmissions()->latest('grading_submissions.created_at')->get()->map(fn (GradingSubmission $submission): array => [
+                ...$submission->progress(),
                 'id' => $submission->id,
                 'grader' => $submission->grader->value,
-                'status' => $submission->status->label(),
-                'submitted_on' => $submission->submitted_on?->toDateString(),
+                'service_level' => $submission->service_level,
+                'reference' => $submission->reference,
+                'is_completed' => $submission->isCompleted(),
                 'resulting_grade' => $submission->getRelation('pivot')->resulting_grade,
             ]),
             'options' => FormOptions::for(),
