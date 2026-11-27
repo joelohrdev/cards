@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import sales from '@/routes/sales';
 import trades from '@/routes/trades';
 import type { CollectionItem, FormOptions } from '@/types';
+import { SuggestInput } from '@/components/kit/suggest-input';
 
 function toCents(value: string): number {
     const parsed = Number.parseFloat(value.replace(/[$,\s]/g, ''));
@@ -165,10 +166,10 @@ export function SaleAction({
                                     error={errors.buyer}
                                     hint="Optional"
                                 >
-                                    <Input
+                                    <SuggestInput
+                                        field="buyer"
                                         id="buyer"
                                         name="buyer"
-                                        autoComplete="off"
                                     />
                                 </Field>
                                 <Field

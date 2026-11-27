@@ -77,7 +77,6 @@ class CardSetController extends Controller
     {
         return Inertia::render('catalog/sets/create', [
             'sports' => Sport::options(),
-            'manufacturers' => Manufacturer::query()->orderBy('name')->pluck('name'),
         ]);
     }
 
@@ -159,7 +158,6 @@ class CardSetController extends Controller
             ],
             'cards' => $cards->map(fn (array $card): array => [...$card, 'wanted' => $wanted->has($card['id'])])->values(),
             'options' => FormOptions::for(),
-            'manufacturers' => Manufacturer::query()->orderBy('name')->pluck('name'),
         ]);
     }
 

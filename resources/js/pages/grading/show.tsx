@@ -29,6 +29,7 @@ import collection from '@/routes/collection';
 import grading from '@/routes/grading';
 import type { CollectionItem, Option } from '@/types';
 import type { SubmissionSummary } from './index';
+import { SuggestInput } from '@/components/kit/suggest-input';
 
 type SubmissionItem = {
     item: CollectionItem;
@@ -313,12 +314,11 @@ function DetailsPanel({
                                 htmlFor="service_level"
                                 error={errors.service_level}
                             >
-                                <Input
+                                <SuggestInput
+                                    field="service_level"
                                     id="service_level"
                                     name="service_level"
-                                    defaultValue={
-                                        submission.service_level ?? ''
-                                    }
+                                    defaultValue={submission.service_level}
                                 />
                             </Field>
                             <Field

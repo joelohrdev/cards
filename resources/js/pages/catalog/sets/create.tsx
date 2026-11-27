@@ -7,14 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import sets from '@/routes/sets';
 import type { Option } from '@/types';
+import { SuggestInput } from '@/components/kit/suggest-input';
 
-export default function SetsCreate({
-    sports,
-    manufacturers,
-}: {
-    sports: Option[];
-    manufacturers: string[];
-}) {
+export default function SetsCreate({ sports }: { sports: Option[] }) {
     return (
         <>
             <Head title="New set" />
@@ -57,16 +52,11 @@ export default function SetsCreate({
                                     error={errors.manufacturer}
                                     className="sm:col-span-2"
                                 >
-                                    <Input
+                                    <SuggestInput
+                                        field="manufacturer"
                                         name="manufacturer"
-                                        list="manufacturers"
                                         placeholder="Topps"
                                     />
-                                    <datalist id="manufacturers">
-                                        {manufacturers.map((name) => (
-                                            <option key={name} value={name} />
-                                        ))}
-                                    </datalist>
                                 </Field>
                                 <Field
                                     label="Sport"

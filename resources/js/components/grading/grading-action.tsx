@@ -2,6 +2,7 @@ import { router } from '@inertiajs/react';
 import { Award } from 'lucide-react';
 import { useState } from 'react';
 import { Field, NativeSelect } from '@/components/kit/field';
+import { SuggestInput } from '@/components/kit/suggest-input';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -11,7 +12,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { useLookup } from '@/hooks/use-lookup';
 import { count, shortDate } from '@/lib/format';
@@ -170,15 +170,12 @@ export function GradingAction({
                                         label="Service level"
                                         htmlFor="new_service_level"
                                     >
-                                        <Input
+                                        <SuggestInput
+                                            field="service_level"
                                             id="new_service_level"
                                             placeholder="e.g. Value"
                                             value={serviceLevel}
-                                            onChange={(event) =>
-                                                setServiceLevel(
-                                                    event.target.value,
-                                                )
-                                            }
+                                            onChange={setServiceLevel}
                                         />
                                     </Field>
                                 </div>

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { TagChip } from '@/components/cards/tag-chip';
 import { controlClass } from '@/components/kit/field';
+import { SuggestInput } from '@/components/kit/suggest-input';
 import { cn } from '@/lib/utils';
 import type { TagSummary } from '@/types';
 
 /**
- * Free-form tag entry with suggestions from existing tags. Enter or comma adds a tag.
+ * Free-form tag entry. Typing suggests existing tags (matching words first); Enter or comma
+ * adds what was typed as a new tag.
  */
 export function TagInput({
     value,
@@ -27,7 +29,13 @@ export function TagInput({
         const names = raw
             .split(',')
             .map((name) => name.trim())
-            .filter(Boolean);
+            .filter(Boolean)
+            .map(
+                (name) =>
+                    suggestions.find(
+                        (tag) => tag.name.toLowerCase() === name.toLowerCase(),
+                    )?.name ?? name,
+            );
         const next = [...value];
 
         for (const name of names) {
@@ -69,15 +77,18 @@ export function TagInput({
                         }
                     />
                 ))}
-                <input
+                <SuggestInput
+                    bare
+                    field="tag"
                     id={id}
                     value={draft}
-                    list={id ? `${id}-suggestions` : undefined}
-                    onChange={(event) => {
-                        if (event.target.value.endsWith(',')) {
-                            add(event.target.value);
+                    exclude={value}
+                    onPick={add}
+                    onChange={(next) => {
+                        if (next.endsWith(',')) {
+                            add(next);
                         } else {
-                            setDraft(event.target.value);
+                            setDraft(next);
                         }
                     }}
                     onKeyDown={(event) => {
@@ -96,16 +107,8 @@ export function TagInput({
                     placeholder={
                         value.length ? '' : 'PC, flip, grading candidate…'
                     }
-                    className="min-w-32 flex-1 bg-transparent outline-none"
                 />
             </div>
-            {id && (
-                <datalist id={`${id}-suggestions`}>
-                    {unused.map((tag) => (
-                        <option key={tag.id} value={tag.name} />
-                    ))}
-                </datalist>
-            )}
             {unused.length > 0 && (
                 <div className="mt-1.5 flex flex-wrap gap-1">
                     {unused.slice(0, 8).map((tag) => (

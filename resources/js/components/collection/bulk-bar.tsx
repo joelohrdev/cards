@@ -2,6 +2,7 @@ import { router } from '@inertiajs/react';
 import { Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { NativeSelect } from '@/components/kit/field';
+import { SuggestInput } from '@/components/kit/suggest-input';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -88,19 +89,17 @@ export function BulkBar({
                 </NativeSelect>
 
                 {(action === 'tag' || action === 'untag') && (
-                    <Input
-                        list="bulk-tag-options"
-                        value={value}
-                        onChange={(event) => setValue(event.target.value)}
-                        placeholder="Tag names, comma separated"
-                        className="w-56 border-white/15 bg-rail-active text-rail-foreground placeholder:text-rail-muted"
-                    />
+                    <div className="w-56">
+                        <SuggestInput
+                            field="tag"
+                            commaSeparated
+                            value={value}
+                            onChange={setValue}
+                            placeholder="Tag names, comma separated"
+                            className="border-white/15 bg-rail-active text-rail-foreground placeholder:text-rail-muted"
+                        />
+                    </div>
                 )}
-                <datalist id="bulk-tag-options">
-                    {options.tags.map((tag) => (
-                        <option key={tag.id} value={tag.name} />
-                    ))}
-                </datalist>
 
                 {action === 'move' && (
                     <NativeSelect

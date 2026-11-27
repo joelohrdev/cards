@@ -1,4 +1,5 @@
 import { Field, NativeSelect } from '@/components/kit/field';
+import { SuggestInput } from '@/components/kit/suggest-input';
 import { Input } from '@/components/ui/input';
 import { count } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -172,13 +173,12 @@ export function GradingPlanFields({
                                 label="Service level"
                                 error={errors['grading.service_level']}
                             >
-                                <Input
+                                <SuggestInput
+                                    field="service_level"
                                     value={plan.service_level}
                                     placeholder="e.g. Value"
-                                    onChange={(event) =>
-                                        update({
-                                            service_level: event.target.value,
-                                        })
+                                    onChange={(serviceLevel) =>
+                                        update({ service_level: serviceLevel })
                                     }
                                 />
                             </Field>

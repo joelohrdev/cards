@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import grading from '@/routes/grading';
 import type { Option } from '@/types';
+import { SuggestInput } from '@/components/kit/suggest-input';
 
 export default function GradingCreate({ graders }: { graders: Option[] }) {
     return (
@@ -64,7 +65,8 @@ export default function GradingCreate({ graders }: { graders: Option[] }) {
                                 error={errors.service_level}
                                 hint="e.g. Value, Regular, Express"
                             >
-                                <Input
+                                <SuggestInput
+                                    field="service_level"
                                     id="service_level"
                                     name="service_level"
                                 />

@@ -12,6 +12,7 @@ import type {
     Option,
     ParallelSummary,
 } from '@/types';
+import { SuggestInput } from '@/components/kit/suggest-input';
 
 export type NewCardDraft = {
     number: string;
@@ -268,13 +269,13 @@ export function CardPicker({
                                     label="Brand"
                                     error={errors['new_set.manufacturer']}
                                 >
-                                    <Input
+                                    <SuggestInput
+                                        field="manufacturer"
                                         value={setDraft.manufacturer}
-                                        onChange={(event) =>
+                                        onChange={(manufacturer) =>
                                             onSetDraftChange({
                                                 ...setDraft,
-                                                manufacturer:
-                                                    event.target.value,
+                                                manufacturer,
                                             })
                                         }
                                         placeholder="Upper Deck"
@@ -396,11 +397,10 @@ export function CardPicker({
                             />
                         </Field>
                         <Field label="Team" className="sm:col-span-2">
-                            <Input
+                            <SuggestInput
+                                field="team"
                                 value={cardDraft.team}
-                                onChange={(event) =>
-                                    updateCard({ team: event.target.value })
-                                }
+                                onChange={(team) => updateCard({ team })}
                                 placeholder="Seattle Mariners"
                             />
                         </Field>
@@ -408,11 +408,10 @@ export function CardPicker({
                             label="Subset / insert"
                             className="sm:col-span-3"
                         >
-                            <Input
+                            <SuggestInput
+                                field="subset"
                                 value={cardDraft.subset}
-                                onChange={(event) =>
-                                    updateCard({ subset: event.target.value })
-                                }
+                                onChange={(subset) => updateCard({ subset })}
                                 placeholder="Star Rookie"
                             />
                         </Field>

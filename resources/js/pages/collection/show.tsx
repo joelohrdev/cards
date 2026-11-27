@@ -32,6 +32,7 @@ import comps from '@/routes/comps';
 import locations from '@/routes/locations';
 import sets from '@/routes/sets';
 import type { CollectionItem, FormOptions, ParallelSummary } from '@/types';
+import { SuggestInput } from '@/components/kit/suggest-input';
 
 type Comp = {
     id: number;
@@ -662,7 +663,11 @@ function CompsPanel({
                                 />
                             </Field>
                             <Field label="Where" className="sm:col-span-2">
-                                <Input name="source" defaultValue="eBay" />
+                                <SuggestInput
+                                    field="comp_source"
+                                    name="source"
+                                    defaultValue="eBay"
+                                />
                             </Field>
                             <Field label="Parallel" className="sm:col-span-2">
                                 <NativeSelect

@@ -31,6 +31,7 @@ import collection from '@/routes/collection';
 import sets from '@/routes/sets';
 import wantList from '@/routes/want-list';
 import type { CardSetSummary, FormOptions, ParallelSummary } from '@/types';
+import { SuggestInput } from '@/components/kit/suggest-input';
 
 type ChecklistCard = {
     id: number;
@@ -55,15 +56,9 @@ type Props = {
     };
     cards: ChecklistCard[];
     options: FormOptions;
-    manufacturers: string[];
 };
 
-export default function SetShow({
-    set,
-    cards: checklist,
-    options,
-    manufacturers,
-}: Props) {
+export default function SetShow({ set, cards: checklist, options }: Props) {
     const [filter, setFilter] = useState<'all' | 'missing' | 'owned'>('all');
     const [ticking, setTicking] = useState(false);
     const [ticked, setTicked] = useState<number[]>([]);
@@ -653,16 +648,11 @@ export default function SetShow({
                                     label="Brand"
                                     error={errors.manufacturer}
                                 >
-                                    <Input
+                                    <SuggestInput
+                                        field="manufacturer"
                                         name="manufacturer"
-                                        list="set-manufacturers"
-                                        defaultValue={set.manufacturer ?? ''}
+                                        defaultValue={set.manufacturer}
                                     />
-                                    <datalist id="set-manufacturers">
-                                        {manufacturers.map((name) => (
-                                            <option key={name} value={name} />
-                                        ))}
-                                    </datalist>
                                 </Field>
                                 <Field label="Sport" error={errors.sport}>
                                     <NativeSelect
@@ -804,11 +794,11 @@ export default function SetShow({
                                         label="Subset"
                                         className="sm:col-span-3"
                                     >
-                                        <Input
+                                        <SuggestInput
+                                            key={editingCard.id}
+                                            field="subset"
                                             name="subset"
-                                            defaultValue={
-                                                editingCard.subset ?? ''
-                                            }
+                                            defaultValue={editingCard.subset}
                                         />
                                     </Field>
                                     <Field

@@ -44,6 +44,7 @@ import type {
     Option,
     PhotoSuggestion,
 } from '@/types';
+import { SuggestInput } from '@/components/kit/suggest-input';
 
 type ItemFormData = {
     card_id: number | null;
@@ -689,13 +690,11 @@ export function ItemForm({
                                 label="Bought from"
                                 error={errors.purchase_source}
                             >
-                                <Input
+                                <SuggestInput
+                                    field="purchase_source"
                                     value={data.purchase_source}
-                                    onChange={(event) =>
-                                        setData(
-                                            'purchase_source',
-                                            event.target.value,
-                                        )
+                                    onChange={(value) =>
+                                        setData('purchase_source', value)
                                     }
                                     placeholder="eBay, show…"
                                 />
