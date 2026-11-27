@@ -1,7 +1,12 @@
 import { cn } from '@/lib/utils';
 
 export type EbayListingStatus =
-    'draft' | 'pending_approval' | 'active' | 'sold' | 'ended' | 'failed';
+    | 'draft'
+    | 'pending_approval'
+    | 'active'
+    | 'sold'
+    | 'ended'
+    | 'failed';
 
 export const listingStatusLabels: Record<EbayListingStatus, string> = {
     active: 'Live',
