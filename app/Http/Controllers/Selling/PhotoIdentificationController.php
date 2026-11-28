@@ -7,7 +7,7 @@ use App\Http\Resources\CardSetResource;
 use App\Services\CardIdentification\CardIdentificationFailed;
 use App\Services\CardIdentification\CardIdentifier;
 use App\Services\CardIdentification\CatalogMatcher;
-use App\Support\ExistingNames;
+use App\Services\CardIdentification\SuggestionNames;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,7 +27,7 @@ class PhotoIdentificationController extends Controller
     /**
      * 200 {suggestion: PhotoSuggestion}; 422/429/502/503 {message} explain what to do next.
      */
-    public function store(Request $request, CardIdentifier $identifier, CatalogMatcher $matcher, ExistingNames $existingNames): JsonResponse
+    public function store(Request $request, CardIdentifier $identifier, CatalogMatcher $matcher, SuggestionNames $suggestionNames): JsonResponse
     {
         if (! $identifier->isConfigured()) {
             return response()->json(['message' => 'Photo identification isn’t set up yet. Add an Anthropic API key as ANTHROPIC_API_KEY in the .env file to turn it on.'], 503);
@@ -50,15 +50,7 @@ class PhotoIdentificationController extends Controller
             return response()->json(['message' => 'Couldn’t read the card from that photo. Try again with the whole card in frame, in good light, without glare.'], 502);
         }
 
-        $suggestion['name'] = $existingNames->players($suggestion['name'], $suggestion['sport']);
-        $suggestion['team'] = $existingNames->spelling('team', $suggestion['team'], $suggestion['sport']);
-        $suggestion['manufacturer'] = $existingNames->spelling('manufacturer', $suggestion['manufacturer']);
-        $set = $existingNames->set($suggestion['set_name'], $suggestion['year'], $suggestion['manufacturer'], $suggestion['sport']);
-        $suggestion['set_name'] = $set->name ?? $existingNames->setName($suggestion['set_name'], $suggestion['manufacturer']);
-
-        if ($set !== null && $set->manufacturer !== null) {
-            $suggestion['manufacturer'] = $set->manufacturer->name;
-        }
+        ['suggestion' => $suggestion, 'set' => $set] = $suggestionNames->apply($suggestion);
 
         return response()->json([
             'suggestion' => [

@@ -18,6 +18,8 @@ use JsonException;
  *
  * @see https://platform.claude.com/docs/en/build-with-claude/structured-outputs
  * @see https://platform.claude.com/docs/en/build-with-claude/vision
+ *
+ * @phpstan-type CardReading array{sport: string|null, year: int|null, manufacturer: string|null, set_name: string|null, number: string|null, name: string|null, team: string|null, parallel: string|null, serial_number: int|null, print_run: int|null, is_rookie: bool, is_autograph: bool, is_memorabilia: bool, is_graded: bool, grader: string|null, grade: string|null, cert_number: string|null, confidence: string}
  */
 class CardIdentifier
 {
@@ -60,7 +62,7 @@ class CardIdentifier
     /**
      * Identify the card from a photo of its front and, optionally, its back.
      *
-     * @return array{sport: string|null, year: int|null, manufacturer: string|null, set_name: string|null, number: string|null, name: string|null, team: string|null, parallel: string|null, serial_number: int|null, print_run: int|null, is_rookie: bool, is_autograph: bool, is_memorabilia: bool, is_graded: bool, grader: string|null, grade: string|null, cert_number: string|null, confidence: string}
+     * @return CardReading
      *
      * @throws CardIdentificationFailed
      */
@@ -143,7 +145,7 @@ class CardIdentifier
     /**
      * Validate the model's JSON and coerce every field into the suggestion shape.
      *
-     * @return array{sport: string|null, year: int|null, manufacturer: string|null, set_name: string|null, number: string|null, name: string|null, team: string|null, parallel: string|null, serial_number: int|null, print_run: int|null, is_rookie: bool, is_autograph: bool, is_memorabilia: bool, is_graded: bool, grader: string|null, grade: string|null, cert_number: string|null, confidence: string}
+     * @return CardReading
      *
      * @throws CardIdentificationFailed
      */

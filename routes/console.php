@@ -1,9 +1,12 @@
 <?php
 
 use App\Actions\Collection\CaptureValueSnapshot;
+use App\Actions\Collection\RecheckCardFromPhotos;
 use App\Enums\UserRole;
+use App\Models\CollectionItem;
 use App\Models\EbayAccount;
 use App\Models\User;
+use App\Services\CardIdentification\CardIdentifier;
 use App\Services\Ebay\EbayException;
 use App\Services\Ebay\OrderSync;
 use Illuminate\Support\Facades\Artisan;
@@ -57,3 +60,55 @@ Artisan::command('cards:sync-ebay-orders', function (OrderSync $orderSync) {
 })->purpose('Record sales for paid eBay orders of listed cards');
 
 Schedule::command('cards:sync-ebay-orders')->everyFifteenMinutes()->withoutOverlapping();
+
+Artisan::command('cards:recheck-photos {--apply : Move the copies; without it, only list what would change} {--card=* : Only copies of these checklist card IDs} {--item=* : Only these copy IDs}', function (RecheckCardFromPhotos $recheck, CardIdentifier $identifier) {
+    if (! $identifier->isConfigured()) {
+        $this->error('Photo identification isn’t set up. Add ANTHROPIC_API_KEY to the .env file.');
+
+        return 1;
+    }
+
+    $apply = (bool) $this->option('apply');
+    $cardIds = $this->option('card');
+    $itemIds = $this->option('item');
+    $copies = CollectionItem::query()
+        ->has('images')
+        ->with(['card.cardSet.manufacturer', 'parallel'])
+        ->when($cardIds !== [], fn ($items) => $items->whereIn('card_id', $cardIds))
+        ->when($itemIds !== [], fn ($items) => $items->whereKey($itemIds));
+
+    $this->info(($apply ? 'Rechecking' : 'Dry run: rechecking').' '.$copies->count().' copies with photos.');
+    $counts = [];
+
+    $copies->lazyById()->each(function (CollectionItem $item) use ($recheck, $apply, &$counts): void {
+        $linkedTo = RecheckCardFromPhotos::cardLabel($item->card);
+        $result = $recheck->handle($item, $apply);
+        $counts[$result['outcome']] = ($counts[$result['outcome']] ?? 0) + 1;
+
+        match ($result['outcome']) {
+            'would_move' => $this->line("Copy {$item->id}: {$linkedTo} → <comment>{$result['target']}</comment>"),
+            'moved' => $this->line("Copy {$item->id}: {$linkedTo} → <info>{$result['target']}</info>"),
+            'unsure' => $this->line("Copy {$item->id}: {$linkedTo} — photos unclear (read: ".($result['reading'] ?: 'nothing').'), left alone'),
+            'unreadable' => $this->warn("Copy {$item->id}: {$linkedTo} — couldn’t read the photos, left alone"),
+            default => null,
+        };
+    });
+
+    $this->newLine();
+    $this->table(['Result', 'Copies'], collect([
+        'correct' => 'Already on the right card',
+        'would_move' => 'Would move',
+        'moved' => 'Moved',
+        'unsure' => 'Photos unclear, left alone',
+        'unreadable' => 'Couldn’t read, left alone',
+    ])->filter(fn (string $label, string $outcome): bool => isset($counts[$outcome]))
+        ->map(fn (string $label, string $outcome): array => [$label, $counts[$outcome]])
+        ->values()
+        ->all());
+
+    if (! $apply && isset($counts['would_move'])) {
+        $this->info('Run again with --apply to move them.');
+    }
+
+    return 0;
+})->purpose('Read each copy\'s photos again with AI and move copies linked to the wrong checklist card');

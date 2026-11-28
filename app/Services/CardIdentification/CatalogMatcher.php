@@ -41,7 +41,7 @@ class CatalogMatcher
             }
 
             $cards = $this->catalogCardSearch->search(array_values(array_unique($words)), limit: 10)
-                ->filter(fn (Card $card): bool => $this->agreesWith($card, $suggestion));
+                ->filter(fn (Card $card): bool => self::agrees($card, $suggestion));
 
             if ($cards->isNotEmpty()) {
                 return array_values($cards->map(fn (Card $card): array => CatalogCardSearch::present($card))->all());
@@ -56,7 +56,7 @@ class CatalogMatcher
      *
      * @param  array{year: int|null, set_name: string|null, number: string|null, name: string|null}  $suggestion
      */
-    private function agreesWith(Card $card, array $suggestion): bool
+    public static function agrees(Card $card, array $suggestion): bool
     {
         if ($suggestion['year'] !== null && $card->cardSet->year !== $suggestion['year']) {
             return false;
