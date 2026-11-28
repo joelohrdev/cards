@@ -2,12 +2,14 @@
 
 namespace App\Http\Requests\Collection;
 
+use App\Actions\Catalog\UpdateChecklistCard;
 use App\Concerns\NormalizesMoneyInput;
 use App\Enums\Grader;
 use App\Enums\GradingStatus;
 use App\Enums\ItemStatus;
 use App\Enums\RawCondition;
 use App\Enums\Sport;
+use App\Models\CollectionItem;
 use App\Models\GradingSubmission;
 use App\Support\StickerCodes;
 use Closure;
@@ -36,8 +38,14 @@ class CollectionItemRequest extends FormRequest
     public function rules(): array
     {
         $creating = $this->isMethod('post');
+        $item = $this->route('item');
+        $checklistCardRules = ! $creating && $item instanceof CollectionItem && $this->filled('card_details')
+            ? UpdateChecklistCard::rules($item->card, 'card_details.')
+            : [];
 
         return [
+            ...$checklistCardRules,
+            'card_details' => [Rule::prohibitedIf($creating), 'nullable', 'array'],
             'card_id' => ['nullable', 'integer', 'exists:cards,id'],
             'card_set_id' => ['nullable', 'integer', 'exists:card_sets,id'],
             'new_set' => ['nullable', 'array'],
@@ -124,6 +132,9 @@ class CollectionItemRequest extends FormRequest
         return [
             'card.required' => 'Choose a card from the catalog or enter a new one.',
             'sticker_code.unique' => 'Another card already has that sticker ID.',
+            'card_details.number.unique' => 'Another card in this set already has that number.',
+            'card_details.number.required' => 'Enter the card number.',
+            'card_details.name.required' => 'Enter the card’s name.',
             'card.number.required_with' => 'Enter the card number.',
             'new_set.manufacturer.required' => 'Enter a brand or a set name.',
             'grading.prohibited' => 'Only raw cards you have on hand can be sent for grading.',

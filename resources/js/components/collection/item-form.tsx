@@ -1,6 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import {
+    CardDetailsFields,
     CardPicker,
     emptyCardDraft,
 } from '@/components/collection/card-picker';
@@ -46,8 +47,14 @@ import type {
 } from '@/types';
 import { SuggestInput } from '@/components/kit/suggest-input';
 
+type ChecklistCardDetails = Omit<NewCardDraft, 'print_run'> & {
+    players: string[];
+    print_run: string | null;
+};
+
 type ItemFormData = {
     card_id: number | null;
+    card_details?: ChecklistCardDetails | null;
     card_set_id: number | null;
     new_set: NewSetDraft | null;
     card:
@@ -101,6 +108,7 @@ export function ItemForm({
     gradingSubmissions = [],
     gradingStatuses = [],
     nextStickerCode = null,
+    otherCopies = 0,
 }: {
     options: FormOptions;
     item?: CollectionItem;
@@ -109,6 +117,8 @@ export function ItemForm({
     gradingSubmissions?: OpenGradingSubmission[];
     gradingStatuses?: Option[];
     nextStickerCode?: string | null;
+    /** How many other copies share this copy's checklist card (editing only). */
+    otherCopies?: number;
 }) {
     const editing = item !== undefined;
     const [mode, setMode] = useState<'existing' | 'new'>('existing');
@@ -120,6 +130,21 @@ export function ItemForm({
     const [setDraft, setSetDraft] = useState<NewSetDraft | null>(null);
     const [newParallel, setNewParallel] = useState(false);
     const [changingCard, setChangingCard] = useState(false);
+    const [checklistCard, setChecklistCard] = useState<
+        NewCardDraft & { players: string }
+    >(() => ({
+        number: item?.card.number ?? '',
+        name: item?.card.name ?? '',
+        players:
+            item?.card.players?.map((player) => player.name).join(' / ') ?? '',
+        team: item?.card.team ?? '',
+        subset: item?.card.subset ?? '',
+        is_rookie: item?.card.is_rookie ?? false,
+        is_autograph: item?.card.is_autograph ?? false,
+        is_memorabilia: item?.card.is_memorabilia ?? false,
+        is_short_print: item?.card.is_short_print ?? false,
+        print_run: item?.card.print_run ? String(item.card.print_run) : '',
+    }));
 
     const form = useForm<ItemFormData>({
         card_id: item?.card.id ?? prefillCard?.id ?? null,
@@ -316,6 +341,17 @@ export function ItemForm({
                 mode === 'new'
                     ? { ...cardDraft, print_run: cardDraft.print_run || null }
                     : null,
+            card_details:
+                editing && !changingCard
+                    ? {
+                          ...checklistCard,
+                          players: checklistCard.players
+                              .split('/')
+                              .map((name) => name.trim())
+                              .filter(Boolean),
+                          print_run: checklistCard.print_run || null,
+                      }
+                    : null,
             parallel_id: newParallel ? '' : current.parallel_id,
             parallel_name: newParallel ? current.parallel_name : '',
             add_another: addAnother,
@@ -366,37 +402,53 @@ export function ItemForm({
                 <Panel
                     title={
                         <span className="flex items-center gap-1">
-                            Which card?
+                            {editing && !changingCard
+                                ? 'Card details'
+                                : 'Which card?'}
                             {(!editing || changingCard) && <CardSearchHelp />}
                         </span>
                     }
                 >
                     {editing && !changingCard ? (
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                                <p className="font-display text-xl font-semibold">
-                                    #{item.card.number} {item.card.name}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    {item.card.set.full_name}
-                                </p>
-                                <p className="mt-2 text-xs text-muted-foreground">
-                                    Wrong card? Change it for this copy only. To
-                                    fix the checklist card itself for every
-                                    copy, edit it from the set page.
-                                </p>
+                        <div className="space-y-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">
+                                        {item.card.set.full_name}
+                                    </p>
+                                    <p className="mt-1 max-w-prose text-xs text-muted-foreground">
+                                        What’s printed on the card.
+                                        {otherCopies > 0 &&
+                                            ` You have ${otherCopies === 1 ? 'another copy' : `${otherCopies} other copies`} of this card, and they share these details, so a fix here shows on ${otherCopies === 1 ? 'both' : 'all of them'}.`}{' '}
+                                        If this copy is a different card
+                                        altogether, or from another set, choose
+                                        “It’s a different card”. Only this copy
+                                        moves.
+                                    </p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setChangingCard(true);
+                                        setPicked(null);
+                                        setData('parallel_id', '');
+                                    }}
+                                >
+                                    It’s a different card
+                                </Button>
                             </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                    setChangingCard(true);
-                                    setPicked(null);
-                                    setData('parallel_id', '');
-                                }}
-                            >
-                                Change card
-                            </Button>
+                            <CardDetailsFields
+                                draft={checklistCard}
+                                onChange={(patch) =>
+                                    setChecklistCard((current) => ({
+                                        ...current,
+                                        ...patch,
+                                    }))
+                                }
+                                errors={errorBag}
+                                errorPrefix="card_details."
+                            />
                         </div>
                     ) : (
                         <>

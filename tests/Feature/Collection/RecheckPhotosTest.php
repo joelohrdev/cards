@@ -98,3 +98,15 @@ test('only the chosen checklist card’s copies are rechecked', function () {
     Http::assertSentCount(1);
     expect($wrong->refresh()->card_id)->toBe($this->mays1966->id);
 });
+
+test('a run can pick up from a copy', function () {
+    $before = leadersCopy($this->leaders);
+    $from = leadersCopy($this->leaders);
+    Http::fake(['api.anthropic.com/*' => Http::response(photoReading(['year' => 1966, 'number' => '1', 'name' => 'Willie Mays']))]);
+
+    $this->artisan('cards:recheck-photos', ['--apply' => true, '--from' => $from->id])->assertSuccessful();
+
+    Http::assertSentCount(1);
+    expect($before->refresh()->card_id)->toBe($this->leaders->id)
+        ->and($from->refresh()->card_id)->toBe($this->mays1966->id);
+});

@@ -369,99 +369,159 @@ export function CardPicker({
                         </div>
                     )}
 
-                    <div className="grid gap-3 sm:grid-cols-6">
-                        <Field
-                            label="Card #"
-                            error={errors['card.number']}
-                            className="sm:col-span-1"
-                        >
-                            <Input
-                                value={cardDraft.number}
-                                onChange={(event) =>
-                                    updateCard({ number: event.target.value })
-                                }
-                                placeholder="1"
-                            />
-                        </Field>
-                        <Field
-                            label="Player(s) / card name"
-                            error={errors['card.name']}
-                            hint="Separate multiple players with “/”."
-                            className="sm:col-span-3"
-                        >
-                            <SuggestInput
-                                field="player"
-                                separator="/"
-                                value={cardDraft.name}
-                                onChange={(name) => updateCard({ name })}
-                                placeholder="Ken Griffey Jr."
-                            />
-                        </Field>
-                        <Field label="Team" className="sm:col-span-2">
-                            <SuggestInput
-                                field="team"
-                                value={cardDraft.team}
-                                onChange={(team) => updateCard({ team })}
-                                placeholder="Seattle Mariners"
-                            />
-                        </Field>
-                        <Field
-                            label="Subset / insert"
-                            className="sm:col-span-3"
-                        >
-                            <SuggestInput
-                                field="subset"
-                                value={cardDraft.subset}
-                                onChange={(subset) => updateCard({ subset })}
-                                placeholder="Star Rookie"
-                            />
-                        </Field>
-                        <Field
-                            label="Numbered to"
-                            className="sm:col-span-1"
-                            hint="Print run"
-                        >
-                            <Input
-                                inputMode="numeric"
-                                value={cardDraft.print_run}
-                                onChange={(event) =>
-                                    updateCard({
-                                        print_run: event.target.value,
-                                    })
-                                }
-                                placeholder="99"
-                            />
-                        </Field>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-6 sm:col-span-2">
-                            {(
-                                [
-                                    ['is_rookie', 'Rookie'],
-                                    ['is_autograph', 'Auto'],
-                                    ['is_memorabilia', 'Relic'],
-                                    ['is_short_print', 'SP'],
-                                ] as const
-                            ).map(([key, label]) => (
-                                <label
-                                    key={key}
-                                    className="flex items-center gap-1.5 text-sm"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={cardDraft[key]}
-                                        onChange={(event) =>
-                                            updateCard({
-                                                [key]: event.target.checked,
-                                            })
-                                        }
-                                        className="size-4 accent-[var(--primary)]"
-                                    />
-                                    {label}
-                                </label>
-                            ))}
-                        </div>
-                    </div>
+                    <CardDetailsFields
+                        draft={cardDraft}
+                        onChange={updateCard}
+                        errors={errors}
+                    />
                 </div>
             )}
+        </div>
+    );
+}
+
+/**
+ * The checklist card's own fields: number, name, team, subset, print run and flags. With
+ * `players` set on the draft, the name and players are separate fields (as when correcting a
+ * card whose name isn't just its players, like a league leaders card); otherwise the name is
+ * the players.
+ */
+export function CardDetailsFields({
+    draft,
+    onChange,
+    errors,
+    errorPrefix = 'card.',
+}: {
+    draft: NewCardDraft & { players?: string };
+    onChange: (patch: Partial<NewCardDraft & { players: string }>) => void;
+    errors: Record<string, string | undefined>;
+    errorPrefix?: string;
+}) {
+    const separatePlayers = draft.players !== undefined;
+
+    return (
+        <div className="grid gap-3 sm:grid-cols-6">
+            <Field
+                label="Card #"
+                error={errors[`${errorPrefix}number`]}
+                className="sm:col-span-1"
+            >
+                <Input
+                    value={draft.number}
+                    onChange={(event) =>
+                        onChange({ number: event.target.value })
+                    }
+                    placeholder="1"
+                />
+            </Field>
+            {separatePlayers ? (
+                <>
+                    <Field
+                        label="Card name"
+                        error={errors[`${errorPrefix}name`]}
+                        className="sm:col-span-5"
+                    >
+                        <Input
+                            value={draft.name}
+                            onChange={(event) =>
+                                onChange({ name: event.target.value })
+                            }
+                            placeholder="Ken Griffey Jr."
+                        />
+                    </Field>
+                    <Field
+                        label="Players"
+                        error={errors[`${errorPrefix}players`]}
+                        hint="Separate multiple players with “/”."
+                        className="sm:col-span-4"
+                    >
+                        <SuggestInput
+                            field="player"
+                            separator="/"
+                            value={draft.players ?? ''}
+                            onChange={(players) => onChange({ players })}
+                            placeholder="Ken Griffey Jr."
+                        />
+                    </Field>
+                </>
+            ) : (
+                <Field
+                    label="Player(s) / card name"
+                    error={errors[`${errorPrefix}name`]}
+                    hint="Separate multiple players with “/”."
+                    className="sm:col-span-3"
+                >
+                    <SuggestInput
+                        field="player"
+                        separator="/"
+                        value={draft.name}
+                        onChange={(name) => onChange({ name })}
+                        placeholder="Ken Griffey Jr."
+                    />
+                </Field>
+            )}
+            <Field label="Team" className="sm:col-span-2">
+                <SuggestInput
+                    field="team"
+                    value={draft.team}
+                    onChange={(team) => onChange({ team })}
+                    placeholder="Seattle Mariners"
+                />
+            </Field>
+            <Field label="Subset / insert" className="sm:col-span-3">
+                <SuggestInput
+                    field="subset"
+                    value={draft.subset}
+                    onChange={(subset) => onChange({ subset })}
+                    placeholder="Star Rookie"
+                />
+            </Field>
+            <Field
+                label="Numbered to"
+                error={errors[`${errorPrefix}print_run`]}
+                className="sm:col-span-1"
+                hint="Print run"
+            >
+                <Input
+                    inputMode="numeric"
+                    value={draft.print_run}
+                    onChange={(event) =>
+                        onChange({ print_run: event.target.value })
+                    }
+                    placeholder="99"
+                />
+            </Field>
+            <div
+                className={
+                    separatePlayers
+                        ? 'flex flex-wrap items-center gap-x-4 gap-y-2 sm:col-span-6'
+                        : 'flex flex-wrap items-center gap-x-4 gap-y-2 pt-6 sm:col-span-2'
+                }
+            >
+                {(
+                    [
+                        ['is_rookie', 'Rookie'],
+                        ['is_autograph', 'Auto'],
+                        ['is_memorabilia', 'Relic'],
+                        ['is_short_print', 'SP'],
+                    ] as const
+                ).map(([key, label]) => (
+                    <label
+                        key={key}
+                        className="flex items-center gap-1.5 text-sm"
+                    >
+                        <input
+                            type="checkbox"
+                            checked={draft[key]}
+                            onChange={(event) =>
+                                onChange({ [key]: event.target.checked })
+                            }
+                            className="size-4 accent-[var(--primary)]"
+                        />
+                        {label}
+                    </label>
+                ))}
+            </div>
         </div>
     );
 }

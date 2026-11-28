@@ -61,7 +61,7 @@ Artisan::command('cards:sync-ebay-orders', function (OrderSync $orderSync) {
 
 Schedule::command('cards:sync-ebay-orders')->everyFifteenMinutes()->withoutOverlapping();
 
-Artisan::command('cards:recheck-photos {--apply : Move the copies; without it, only list what would change} {--card=* : Only copies of these checklist card IDs} {--item=* : Only these copy IDs}', function (RecheckCardFromPhotos $recheck, CardIdentifier $identifier) {
+Artisan::command('cards:recheck-photos {--apply : Move the copies; without it, only list what would change} {--card=* : Only copies of these checklist card IDs} {--item=* : Only these copy IDs} {--from= : Start at this copy ID, to pick up a run that stopped}', function (RecheckCardFromPhotos $recheck, CardIdentifier $identifier) {
     if (! $identifier->isConfigured()) {
         $this->error('Photo identification isn’t set up. Add ANTHROPIC_API_KEY to the .env file.');
 
@@ -71,11 +71,13 @@ Artisan::command('cards:recheck-photos {--apply : Move the copies; without it, o
     $apply = (bool) $this->option('apply');
     $cardIds = $this->option('card');
     $itemIds = $this->option('item');
+    $fromId = $this->option('from');
     $copies = CollectionItem::query()
         ->has('images')
         ->with(['card.cardSet.manufacturer', 'parallel'])
         ->when($cardIds !== [], fn ($items) => $items->whereIn('card_id', $cardIds))
-        ->when($itemIds !== [], fn ($items) => $items->whereKey($itemIds));
+        ->when($itemIds !== [], fn ($items) => $items->whereKey($itemIds))
+        ->when(is_numeric($fromId), fn ($items) => $items->where('id', '>=', (int) $fromId));
 
     $this->info(($apply ? 'Rechecking' : 'Dry run: rechecking').' '.$copies->count().' copies with photos.');
     $counts = [];

@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -199,7 +200,7 @@ export default function SetShow({ set, cards: checklist, options }: Props) {
                     >
                         <Plus />{' '}
                         {checklist.length
-                            ? 'Add checklist cards'
+                            ? 'Add more cards'
                             : 'Paste checklist'}
                     </Button>
                 </div>
@@ -733,7 +734,11 @@ export default function SetShow({ set, cards: checklist, options }: Props) {
             >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit checklist card</DialogTitle>
+                        <DialogTitle>Edit card details</DialogTitle>
+                        <DialogDescription>
+                            What’s printed on the card. Every copy you own of it
+                            shows these details.
+                        </DialogDescription>
                     </DialogHeader>
                     {editingCard && (
                         <Form

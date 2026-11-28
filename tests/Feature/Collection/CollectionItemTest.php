@@ -189,6 +189,56 @@ test('a copy linked to the wrong card can be moved to another card without chang
     ]],
 ]);
 
+test('a copy’s edit page corrects its checklist card’s details too', function () {
+    $card = Card::factory()->create(['number' => 'U-9', 'name' => 'Ken Griffey Jr.', 'is_rookie' => false]);
+    $item = CollectionItem::factory()->for($card)->create();
+    CollectionItem::factory()->for($card)->create();
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('collection.edit', $item))
+        ->assertInertia(fn (Assert $page) => $page->where('otherCopies', 1));
+
+    $this->actingAs(User::factory()->create())
+        ->put(route('collection.update', $item), [
+            'card_id' => $card->id,
+            'status' => 'owned',
+            'card_details' => [
+                'number' => 'U-10',
+                'name' => 'Ken Griffey Jr. Highlights',
+                'players' => ['Ken Griffey Jr.'],
+                'team' => 'Seattle Mariners',
+                'is_rookie' => true,
+                'print_run' => 99,
+            ],
+        ])
+        ->assertSessionHasNoErrors();
+
+    $card->refresh();
+
+    expect($card->number)->toBe('U-10')
+        ->and($card->name)->toBe('Ken Griffey Jr. Highlights')
+        ->and($card->is_rookie)->toBeTrue()
+        ->and($card->print_run)->toBe(99)
+        ->and($card->team->name)->toBe('Seattle Mariners')
+        ->and($card->players->pluck('name')->all())->toBe(['Ken Griffey Jr.']);
+});
+
+test('a checklist card can’t take a number another card in its set has', function () {
+    $card = Card::factory()->create(['number' => '1']);
+    Card::factory()->for($card->cardSet)->create(['number' => '2']);
+    $item = CollectionItem::factory()->for($card)->create();
+
+    $this->actingAs(User::factory()->create())
+        ->put(route('collection.update', $item), [
+            'card_id' => $card->id,
+            'status' => 'owned',
+            'card_details' => ['number' => '2', 'name' => 'Someone'],
+        ])
+        ->assertSessionHasErrors(['card_details.number' => 'Another card in this set already has that number.']);
+
+    expect($card->refresh()->number)->toBe('1');
+});
+
 test('a teammate can view, update and delete a card someone else added', function () {
     $item = CollectionItem::factory()->create();
     $teammate = User::factory()->create();

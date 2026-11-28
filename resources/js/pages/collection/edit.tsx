@@ -8,8 +8,10 @@ export default function CollectionEdit({
     item,
     parallels,
     options,
+    otherCopies,
 }: {
     item: CollectionItem;
+    otherCopies: number;
     parallels: ParallelSummary[];
     options: FormOptions;
 }) {
@@ -27,7 +29,12 @@ export default function CollectionEdit({
                 }
                 title={`Edit ${item.card.name}`}
             />
-            <ItemForm options={options} item={item} parallels={parallels} />
+            <ItemForm
+                options={options}
+                item={item}
+                parallels={parallels}
+                otherCopies={otherCopies}
+            />
         </>
     );
 }

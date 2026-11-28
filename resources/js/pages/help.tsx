@@ -171,6 +171,17 @@ const sections: Section[] = [
                     is tracked on its own so you can sell or grade them
                     separately.
                 </p>
+                <p>
+                    <strong>Cards and copies.</strong> A card is what’s printed:
+                    set, number, player, team, rookie and so on. A copy is one
+                    you hold: its parallel, condition or grade, photos, price
+                    and storage spot. Two copies of the same card share its
+                    details and its sold comps, so fixing a typo in the player’s
+                    name on one fixes it on both. When a copy turns out to be a
+                    different card, open it, choose <em>Edit</em>, then{' '}
+                    <em>It’s a different card</em>, and pick the right one. Only
+                    that copy moves.
+                </p>
             </>
         ),
     },

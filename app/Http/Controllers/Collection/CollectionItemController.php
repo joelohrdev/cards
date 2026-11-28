@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Collection;
 
+use App\Actions\Catalog\UpdateChecklistCard;
 use App\Actions\Collection\SaveCollectionItem;
 use App\Actions\Collection\StoreCardPhoto;
 use App\Actions\Grading\PlaceNewItemsInGrading;
@@ -23,6 +24,7 @@ use App\Support\FormOptions;
 use App\Support\StickerCodes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -253,6 +255,7 @@ class CollectionItemController extends Controller
 
         return Inertia::render('collection/edit', [
             'item' => CollectionItemResource::make($item)->resolve(),
+            'otherCopies' => $item->card->collectionItems()->whereKeyNot($item->id)->count(),
             'parallels' => $item->card->cardSet->parallels->map->only(['id', 'name', 'print_run'])->values(),
             'options' => FormOptions::for(),
         ]);
@@ -261,9 +264,20 @@ class CollectionItemController extends Controller
     /**
      * Update a card in the collection.
      */
-    public function update(CollectionItemRequest $request, CollectionItem $item, SaveCollectionItem $saveCollectionItem): RedirectResponse
+    public function update(CollectionItemRequest $request, CollectionItem $item, SaveCollectionItem $saveCollectionItem, UpdateChecklistCard $updateChecklistCard): RedirectResponse
     {
-        $saveCollectionItem->handle($request->user(), $request->validated(), $item);
+        $data = $request->validated();
+        $cardDetails = Arr::pull($data, 'card_details');
+        $linkedCardId = $item->card_id;
+
+        DB::transaction(function () use ($request, $data, $item, $cardDetails, $linkedCardId, $saveCollectionItem, $updateChecklistCard): void {
+            $saveCollectionItem->handle($request->user(), $data, $item);
+
+            // Checklist details are for the card the copy was on; a copy moved to another card leaves them.
+            if (is_array($cardDetails) && $item->card_id === $linkedCardId) {
+                $updateChecklistCard->handle($item->card, $cardDetails);
+            }
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Card updated.']);
 
