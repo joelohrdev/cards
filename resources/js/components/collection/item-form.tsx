@@ -119,6 +119,7 @@ export function ItemForm({
     const [cardDraft, setCardDraft] = useState<NewCardDraft>(emptyCardDraft);
     const [setDraft, setSetDraft] = useState<NewSetDraft | null>(null);
     const [newParallel, setNewParallel] = useState(false);
+    const [changingCard, setChangingCard] = useState(false);
 
     const form = useForm<ItemFormData>({
         card_id: item?.card.id ?? prefillCard?.id ?? null,
@@ -366,22 +367,36 @@ export function ItemForm({
                     title={
                         <span className="flex items-center gap-1">
                             Which card?
-                            {!editing && <CardSearchHelp />}
+                            {(!editing || changingCard) && <CardSearchHelp />}
                         </span>
                     }
                 >
-                    {editing ? (
-                        <div>
-                            <p className="font-display text-xl font-semibold">
-                                #{item.card.number} {item.card.name}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                {item.card.set.full_name}
-                            </p>
-                            <p className="mt-2 text-xs text-muted-foreground">
-                                To fix the card’s checklist details, edit it
-                                from the set page.
-                            </p>
+                    {editing && !changingCard ? (
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <p className="font-display text-xl font-semibold">
+                                    #{item.card.number} {item.card.name}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    {item.card.set.full_name}
+                                </p>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                    Wrong card? Change it for this copy only. To
+                                    fix the checklist card itself for every
+                                    copy, edit it from the set page.
+                                </p>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setChangingCard(true);
+                                    setPicked(null);
+                                    setData('parallel_id', '');
+                                }}
+                            >
+                                Change card
+                            </Button>
                         </div>
                     ) : (
                         <>
@@ -410,9 +425,11 @@ export function ItemForm({
                                 setDraft={setDraft}
                                 onSetDraftChange={setSetDraft}
                                 scanAction={
-                                    <IdentifyFromPhoto
-                                        onResult={applySuggestion}
-                                    />
+                                    editing ? undefined : (
+                                        <IdentifyFromPhoto
+                                            onResult={applySuggestion}
+                                        />
+                                    )
                                 }
                                 sports={options.sports}
                                 errors={errorBag}

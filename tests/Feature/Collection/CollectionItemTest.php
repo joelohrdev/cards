@@ -161,6 +161,34 @@ test('a card can be viewed, updated and deleted by its owner', function () {
     expect($item->fresh())->toBeNull();
 });
 
+test('a copy linked to the wrong card can be moved to another card without changing the others', function (array $moveTo) {
+    $leaders = Card::factory()->create(['number' => '215', 'name' => 'N.L. Batting Leaders']);
+    $wrong = CollectionItem::factory()->for($leaders)->create();
+    $right = CollectionItem::factory()->for($leaders)->create();
+    $clemente = Card::factory()->create(['number' => '440', 'name' => 'Bob Clemente']);
+
+    $this->actingAs(User::factory()->create())
+        ->put(route('collection.update', $wrong), [
+            ...$moveTo === [] ? ['card_id' => $clemente->id] : $moveTo,
+            'status' => 'owned',
+            'is_graded' => true,
+            'grader' => 'SGC',
+            'grade' => '5',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($wrong->refresh()->card->name)->toBe('Bob Clemente')
+        ->and($wrong->card->number)->toBe('440')
+        ->and($right->refresh()->card_id)->toBe($leaders->id)
+        ->and($leaders->refresh()->name)->toBe('N.L. Batting Leaders');
+})->with([
+    'an existing card' => [[]],
+    'a card not on any checklist yet' => [[
+        'new_set' => ['sport' => 'baseball', 'year' => 1964, 'manufacturer' => 'Topps', 'name' => null],
+        'card' => ['number' => '440', 'name' => 'Bob Clemente'],
+    ]],
+]);
+
 test('a teammate can view, update and delete a card someone else added', function () {
     $item = CollectionItem::factory()->create();
     $teammate = User::factory()->create();

@@ -7,6 +7,10 @@ use App\Support\CatalogCardSearch;
 
 /**
  * Finds catalog cards that look like a photo suggestion, from most to least specific search.
+ *
+ * The looser searches only need a player name, so a card is kept only when its year and number
+ * agree with what the photo shows. Otherwise any card naming that player, such as a league
+ * leaders card, would be picked for a scan of a different card.
  */
 class CatalogMatcher
 {
@@ -36,7 +40,8 @@ class CatalogMatcher
                 continue;
             }
 
-            $cards = $this->catalogCardSearch->search(array_values(array_unique($words)), limit: 10);
+            $cards = $this->catalogCardSearch->search(array_values(array_unique($words)), limit: 10)
+                ->filter(fn (Card $card): bool => $this->agreesWith($card, $suggestion));
 
             if ($cards->isNotEmpty()) {
                 return array_values($cards->map(fn (Card $card): array => CatalogCardSearch::present($card))->all());
@@ -44,5 +49,20 @@ class CatalogMatcher
         }
 
         return [];
+    }
+
+    /**
+     * Whether the card's year and number match the photo's, where the photo shows them.
+     *
+     * @param  array{year: int|null, set_name: string|null, number: string|null, name: string|null}  $suggestion
+     */
+    private function agreesWith(Card $card, array $suggestion): bool
+    {
+        if ($suggestion['year'] !== null && $card->cardSet->year !== $suggestion['year']) {
+            return false;
+        }
+
+        return $suggestion['number'] === null
+            || strcasecmp(ltrim($card->number, '#'), ltrim($suggestion['number'], '#')) === 0;
     }
 }

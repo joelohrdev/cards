@@ -152,6 +152,29 @@ test('team and brand read from a photo take the spelling already in the app', fu
         ->assertJsonPath('suggestion.name', 'Someone New');
 });
 
+test('a card that only shares a player isn’t matched when its year or number differs', function (array $read) {
+    Http::preventStrayRequests();
+    Http::fake(['api.anthropic.com/v1/messages' => Http::response(claudeReply(json_encode([
+        'sport' => 'baseball',
+        'manufacturer' => 'Topps',
+        'name' => 'Bob Clemente',
+        'confidence' => 'high',
+        ...$read,
+    ])))]);
+
+    $set = CardSet::factory()->for(Manufacturer::factory()->state(['name' => 'Topps']))->create(['year' => 1966, 'name' => 'Topps', 'sport' => 'baseball']);
+    $leaders = Card::factory()->for($set)->create(['number' => '215', 'name' => 'N.L. Batting Leaders (Bob Clemente, Hank Aaron, Willie Mays)']);
+    $leaders->players()->attach(Player::factory()->create(['name' => 'Bob Clemente']));
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('identify.photo.store'), ['photo' => UploadedFile::fake()->image('card.jpg')], ['Accept' => 'application/json'])
+        ->assertOk()
+        ->assertJsonCount(0, 'suggestion.matches');
+})->with([
+    'another year' => [['year' => 1964, 'set_name' => 'Topps', 'number' => '440']],
+    'same year, another number' => [['year' => 1966, 'set_name' => 'Topps', 'number' => '300']],
+]);
+
 test('a photo of a card not in the checklist picks the existing set it belongs to', function () {
     Http::preventStrayRequests();
     Http::fake(['api.anthropic.com/v1/messages' => Http::response(claudeReply(json_encode([
